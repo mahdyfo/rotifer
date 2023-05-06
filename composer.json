@@ -1,0 +1,16 @@
+{
+    "name": "mahdyfo/genetic-automl",
+    "description": "Genetic AI that creates it deep learning network structure",
+    "autoload": {
+        "psr-4": {
+            "GeneticAutoml\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "mahdyfo",
+            "email": "mahdyfof@gmail.com"
+        }
+    ],
+    "require": {}
+}
