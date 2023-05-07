@@ -5,6 +5,7 @@ namespace GeneticAutoml\Models;
 use Exception;
 use GeneticAutoml\Encoders\BinaryEncoder;
 use GeneticAutoml\Encoders\Encoder;
+use GeneticAutoml\Helpers\ReproductionHelper;
 
 class World
 {
@@ -47,6 +48,15 @@ class World
         $this->agents = $agents;
 
         return $this;
+    }
+
+    public function reproduce(Agent $agent1, Agent $agent2)
+    {
+        $child = ReproductionHelper::crossover($agent1, $agent2);
+
+        // TODO: Mutation
+
+        return $child;
     }
 
     public function getGenomesString(Encoder $encoder = null, $geneIterationCallback = null, $geneSeparator = ';', $genomeSeparator = "\n"): string
