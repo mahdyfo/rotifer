@@ -2,9 +2,7 @@
 
 namespace GeneticAutoml\Models;
 
-use Closure;
 use Exception;
-use GeneticAutoml\Encoders\BinaryEncoder;
 use GeneticAutoml\Encoders\Encoder;
 use GeneticAutoml\Helpers\ReproductionHelper;
 use GeneticAutoml\Helpers\WeightHelper;
@@ -12,11 +10,9 @@ use GeneticAutoml\Helpers\WeightHelper;
 class Agent
 {
     /**
-     * Used as a memory database
-     * @var array
+     * @var Neuron[][]
      */
     private array $neurons = [];
-    private $activation = null;
 
     /**
      * @param int $type The type of the neuron like Neuron::TYPE_INPUT
@@ -52,6 +48,20 @@ class Agent
     }
 
     /**
+     * @param array|string $genome raw array or string encoded genome
+     * @param Encoder|null $decoder
+     * @param string $separator If you provide string, you should specify the separator between genes
+     * @return Agent
+     * @throws Exception
+     */
+    public static function createFromGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): self
+    {
+        $agent = new self();
+        $agent->setGenome($genome, $decoder, $separator);
+        return $agent;
+    }
+
+    /**
      * Connect all inputs to all outputs with random weights
      * @return Agent
      * @throws Exception
@@ -62,9 +72,71 @@ class Agent
         /** @var Neuron $outputNeuron */
         foreach ($this->getNeuronsByType(Neuron::TYPE_INPUT) as $inputNeuron) {
             foreach ($this->getNeuronsByType(Neuron::TYPE_OUTPUT) as $outputNeuron) {
-                $inputNeuron->connectTo($outputNeuron, WeightHelper::generateRandomWeight());
+                $this->connectNeurons($inputNeuron, $outputNeuron, WeightHelper::generateRandomWeight());
             }
         }
+
+        return $this;
+    }
+
+    public function connectNeurons(Neuron $neuron1, Neuron $neuron2, $weight): self
+    {
+        if ($weight > WeightHelper::MAX_WEIGHT || $weight < -WeightHelper::MAX_WEIGHT) {
+            throw new Exception('Weight of connection from ' . $neuron1->getType() . ':' . $neuron1->getIndex()
+                . ' to ' . $neuron1->getType() . ':' . $neuron1->getIndex()
+                . ' is out of allowed range of +-' . WeightHelper::MAX_WEIGHT . '. Current value: ' . $weight);
+        }
+
+        if ($neuron1->getType() == Neuron::TYPE_INPUT && $neuron2->getType() == Neuron::TYPE_INPUT) {
+            throw new Exception('Cannot connect input to input');
+        }
+        if ($neuron1->getType() == Neuron::TYPE_OUTPUT && $neuron2->getType() == Neuron::TYPE_OUTPUT) {
+            throw new Exception('Cannot connect output to output');
+        }
+        if ($neuron1->getType() == Neuron::TYPE_HIDDEN && $neuron2->getType() == Neuron::TYPE_INPUT) {
+            throw new Exception('Cannot connect hidden to input');
+        }
+
+        $neuron2->setInConnection($neuron1->getType(), $neuron1->getIndex(), $weight);
+        $neuron1->setOutConnection($neuron2->getType(), $neuron2->getIndex(), $weight);
+
+        return $this;
+    }
+
+    /**
+     * @param array|string $genome raw array or string encoded genome
+     * @param Encoder|null $decoder
+     * @param string $separator If you provide string, you should specify the separator between genes
+     * @return Agent
+     * @throws Exception
+     */
+    public function setGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): self
+    {
+        // Separate genes if genome is provided as string
+        if (!is_array($genome)) {
+            $genome = array_filter(explode($separator, $genome));
+        }
+
+        // Decode the genes if a decoder is provided
+        if (!is_null($decoder)) {
+            foreach ($genome as $key => $gene) {
+                $genome[$key] = $decoder->decodeConnection($gene);
+            }
+        }
+
+        // Delete all previous connections but do not delete neurons because they have previous calculated values in them
+        $this->deleteAllConnections();
+
+        // Create new connections from genome
+        foreach ($genome as $gene) {
+            $this->connectNeurons(
+                $this->findOrCreateNeuron($gene['from_type'], $gene['from_index']),
+                $this->findOrCreateNeuron($gene['to_type'], $gene['to_index']),
+                $gene['weight']
+            );
+        }
+
+        $this->deleteRedundantNeurons();
 
         return $this;
     }
@@ -79,53 +151,87 @@ class Agent
         return [];
     }
 
-    public function getAllNeurons(): array
-    {
-        return $this->neurons;
-    }
-
-    public function setActivation($activation): self
-    {
-        $this->activation = $activation;
-
-        return $this;
-    }
-
     /**
-     * @param Encoder|null $encoder Default BinaryEncoder
-     * @param Closure|null $iterationCallback The function to execute on each element
+     * @param Encoder|null $encoder Default is array genome
+     * @param mixed $iterationCallback The function to execute on each element
      * @return array
      */
-    public function getGenomeArray(Encoder $encoder = null, Closure $iterationCallback = null): array
+    public function getGenomeArray(Encoder $encoder = null, $iterationCallback = null): array
     {
-        if (is_null($encoder)) {
-            $encoder = new BinaryEncoder();
-        }
-
-        $neurons = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
-        $neurons = array_merge($neurons, $this->getNeuronsByType(Neuron::TYPE_OUTPUT));
+        $neuronGroups = [
+            $this->getNeuronsByType(Neuron::TYPE_HIDDEN),
+            $this->getNeuronsByType(Neuron::TYPE_OUTPUT)
+        ];
         $genomes = [];
         /** @var Neuron $neuron */
-        foreach ($neurons as $neuron) {
-            foreach ($neuron->getInConnections() as $fromType => $indexConnections) {
-                foreach ($indexConnections as $fromIndex => $weight) {
-                    $genome = $encoder->encodeConnection(
-                        $fromType,
-                        $fromIndex,
-                        $neuron->getType(),
-                        $neuron->getIndex(),
-                        $weight
-                    );
-                    $genomes[] = !is_null($iterationCallback) ? $iterationCallback($genome) : $genome;
+        foreach ($neuronGroups as $neuronGroup) {
+            foreach ($neuronGroup as $neuron) {
+                foreach ($neuron->getInConnections() as $fromType => $indexConnections) {
+                    foreach ($indexConnections as $fromIndex => $weight) {
+                        $genome = [
+                            $fromType,
+                            $fromIndex,
+                            $neuron->getType(),
+                            $neuron->getIndex(),
+                            $weight
+                        ];
+                        if (!is_null($encoder)) {
+                            $genome = $encoder->encodeConnection(...$genome);
+                        }
+                        $genomes[] = !is_null($iterationCallback) ? $iterationCallback($genome) : $genome;
+                    }
                 }
             }
         }
         return $genomes;
     }
 
-    public function getGenomeString(Encoder $encoder = null, $separator = ';', $iterationCallback = null): string
+    /**
+     * Get string formatted genome
+     * @param Encoder $encoder You must specify encoder because you want a string
+     * @param string $separator
+     * @param null $iterationCallback
+     * @return string
+     */
+    public function getGenomeString(Encoder $encoder, string $separator = ';', $iterationCallback = null): string
     {
         return implode($separator, $this->getGenomeArray($encoder, $iterationCallback));
+    }
+
+    public function deleteAllConnections(): void
+    {
+        foreach ($this->neurons as $type => $neuronsByIndex) {
+            foreach ($neuronsByIndex as $index => $neuron) {
+                $neuron->deleteConnections();
+            }
+        }
+    }
+
+    /**
+     * Delete stray hidden neurons without any out-connections, or just 1 out-connection to themselves
+     * @return void
+     */
+    public function deleteRedundantNeurons(): void
+    {
+        $neuronsByIndex = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
+        foreach ($neuronsByIndex as $index => $neuron) {
+            // Delete stray neurons without any out-connections
+            if (count($neuron->getOutConnections()) == 0) {
+                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+            }
+
+            // Delete neurons with 1 only out-connection just to themselves
+            if (
+                count($neuron->getOutConnections()) == 1 &&
+                isset($neuron->getOutConnections()[Neuron::TYPE_HIDDEN][$index])
+            ) {
+                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+            }
+        }
+
+        if (empty($this->neurons[Neuron::TYPE_HIDDEN])) {
+            unset($this->neurons[Neuron::TYPE_HIDDEN]);
+        }
     }
 
     /**
@@ -159,14 +265,10 @@ class Agent
                         $newValue += $this->findOrCreateNeuron($type, $index)->getValue() * $weight;
                     }
                 }
-                $neuron->setValue($newValue)->applyActivation($this->activation);
+                $neuron->setValue($newValue)->applyActivation();
             }
         }
-    }
 
-    public function reproduce(Agent $agent)
-    {
-        $child = ReproductionHelper::crossover($this, $agent);
-
+        //TODO: calculate fitness score based on fitness callback function
     }
 }

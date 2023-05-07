@@ -2,9 +2,7 @@
 
 namespace GeneticAutoml\Models;
 
-use Exception;
 use GeneticAutoml\Activations\Activation;
-use GeneticAutoml\Helpers\WeightHelper;
 
 class Neuron
 {
@@ -16,35 +14,12 @@ class Neuron
     private int $type;
     private float $value = 0;
 
-    // [INPUT => [400 => 2.356, 320 => 1.55], NEURON => [506 => 0.056, 601 => 1.2]]
+    /**
+     * The connections into this neuron
+     * @var array [INPUT => [400 => 2.356, 320 => 1.55], NEURON => [506 => 0.056, 601 => 1.2]]
+     */
     private array $inConnections = [];
     private array $outConnections = [];
-
-
-
-    public function connectTo(Neuron $neuron, $weight): self
-    {
-        if ($weight > WeightHelper::MAX_WEIGHT || $weight < -WeightHelper::MAX_WEIGHT) {
-            throw new Exception('Weight of connection from ' . $this->getType() . ':' . $this->getIndex()
-                . ' to ' . $this->getType() . ':' . $this->getIndex()
-                . ' is out of allowed range of +-' . WeightHelper::MAX_WEIGHT . '. Current value: ' . $weight);
-        }
-
-        if ($this->getType() == Neuron::TYPE_INPUT && $neuron->getType() == Neuron::TYPE_INPUT) {
-            throw new Exception('Cannot connect input to input');
-        }
-        if ($this->getType() == Neuron::TYPE_OUTPUT && $neuron->getType() == Neuron::TYPE_OUTPUT) {
-            throw new Exception('Cannot connect output to output');
-        }
-        if ($this->getType() == Neuron::TYPE_HIDDEN && $neuron->getType() == Neuron::TYPE_INPUT) {
-            throw new Exception('Cannot connect hidden to input');
-        }
-
-        $this->outConnections[$neuron->getType()][$neuron->getIndex()] = $weight;
-        $neuron->inConnections[$this->getType()][$this->getIndex()] = $weight;
-
-        return $this;
-    }
 
     public function setType(int $type): self
     {
@@ -93,5 +68,29 @@ class Neuron
     public function getInConnections(): array
     {
         return $this->inConnections;
+    }
+
+    public function setInConnection($type, $index, $weight): self
+    {
+        $this->inConnections[$type][$index] = $weight;
+
+        return $this;
+    }
+
+    public function getOutConnections(): array
+    {
+        return $this->outConnections;
+    }
+
+    public function setOutConnection($type, $index, $weight): self
+    {
+        $this->outConnections[$type][$index] = $weight;
+
+        return $this;
+    }
+
+    public function deleteConnections(): array
+    {
+        return $this->inConnections = [];
     }
 }
