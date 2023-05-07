@@ -56,9 +56,7 @@ class Agent
      */
     public static function createFromGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): self
     {
-        $agent = new self();
-        $agent->setGenome($genome, $decoder, $separator);
-        return $agent;
+        return (new self())->setGenome($genome, $decoder, $separator);
     }
 
     /**
@@ -169,11 +167,11 @@ class Agent
                 foreach ($neuron->getInConnections() as $fromType => $indexConnections) {
                     foreach ($indexConnections as $fromIndex => $weight) {
                         $genome = [
-                            $fromType,
-                            $fromIndex,
-                            $neuron->getType(),
-                            $neuron->getIndex(),
-                            $weight
+                            'from_type' => $fromType,
+                            'from_index' => $fromIndex,
+                            'to_type' => $neuron->getType(),
+                            'to_index' => $neuron->getIndex(),
+                            'weight' => $weight
                         ];
                         if (!is_null($encoder)) {
                             $genome = $encoder->encodeConnection(...$genome);
