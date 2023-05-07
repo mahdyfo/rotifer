@@ -7,6 +7,15 @@ use GeneticAutoml\Models\Neuron;
 
 class BinaryEncoder implements Encoder
 {
+    private static $instance;
+
+    public static function getInstance(): BinaryEncoder
+    {
+        if (!isset(self::$instance)) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
     /**
      * [input/neuron] [index] [neuron/output] [index] [weight]
      *      1-char    16-char       1-char    16-char 24-char
@@ -36,16 +45,16 @@ class BinaryEncoder implements Encoder
 
     public function decodeConnection(string $binaryGene): array
     {
-        $fromType = substr($binaryGene, 0, 1);
+        $fromType = substr($binaryGene, 0, 1) == "0" ? Neuron::TYPE_INPUT : Neuron::TYPE_HIDDEN;
         $fromIndex = substr($binaryGene, 1, 16);
-        $toType = substr($binaryGene, 17, 1);
+        $toType = substr($binaryGene, 17, 1) == "0" ? Neuron::TYPE_HIDDEN : Neuron::TYPE_OUTPUT;
         $toIndex = substr($binaryGene, 18, 16);
         $weight = substr($binaryGene, 34, 24);
 
         return [
-            'from_type' => (int)$fromType,
+            'from_type' => $fromType,
             'from_index' => bindec($fromIndex),
-            'to_type' => (int)$toType,
+            'to_type' => $toType,
             'to_index' => bindec($toIndex),
             'weight' => (bindec($weight) / 1000000) - WeightHelper::MAX_WEIGHT,
         ];
