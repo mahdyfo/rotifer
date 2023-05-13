@@ -4,7 +4,6 @@ namespace GeneticAutoml\Models;
 
 use Exception;
 use GeneticAutoml\Encoders\Encoder;
-use GeneticAutoml\Helpers\ReproductionHelper;
 use GeneticAutoml\Helpers\WeightHelper;
 
 class Agent
@@ -13,6 +12,8 @@ class Agent
      * @var Neuron[][]
      */
     private array $neurons = [];
+    private float $fitness = 0;
+    private int $step = 0;
 
     /**
      * @param int $type The type of the neuron like Neuron::TYPE_INPUT
@@ -174,7 +175,7 @@ class Agent
                             'weight' => $weight
                         ];
                         if (!is_null($encoder)) {
-                            $genome = $encoder->encodeConnection(...$genome);
+                            $genome = $encoder->encodeConnection(...array_values($genome));
                         }
                         $genomes[] = !is_null($iterationCallback) ? $iterationCallback($genome) : $genome;
                     }
@@ -211,6 +212,7 @@ class Agent
      */
     public function deleteRedundantNeurons(): void
     {
+        // No need to remove duplicates. They are automatically replaced because of having same array keys
         $neuronsByIndex = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
         foreach ($neuronsByIndex as $index => $neuron) {
             // Delete stray neurons without any out-connections
@@ -234,10 +236,9 @@ class Agent
 
     /**
      * @param array $inputs
-     * @return void
      * @throws Exception
      */
-    public function step(array $inputs): void
+    public function step(array $inputs): Agent
     {
         // Set inputs
         $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
@@ -267,6 +268,59 @@ class Agent
             }
         }
 
-        //TODO: calculate fitness score based on fitness callback function
+        $this->step++;
+
+        return $this;
+    }
+
+    /**
+     * Get the current inputs of the agent
+     * @return array
+     */
+    public function getInputs(): array
+    {
+        $inputs = [];
+        foreach ($this->getNeuronsByType(Neuron::TYPE_INPUT) as $input) {
+            $inputs[] = $input->getValue();
+        }
+        return $inputs;
+    }
+
+    /**
+     * Get the current outputs of the agent
+     * @return array
+     */
+    public function getOutputs(): array
+    {
+        $outputs = [];
+        foreach ($this->getNeuronsByType(Neuron::TYPE_OUTPUT) as $output) {
+            $outputs[] = $output->getValue();
+        }
+        return $outputs;
+    }
+
+    /**
+     * Use it to know the current step of the agent
+     * @return int
+     */
+    public function getStep(): int
+    {
+        return $this->step;
+    }
+
+    /**
+     * Get the latest calculated fitness value of the agent
+     * @return float
+     */
+    public function getFitness(): float
+    {
+        return $this->fitness;
+    }
+
+    public function setFitness(float $fitness): self
+    {
+        $this->fitness = $fitness;
+
+        return $this;
     }
 }
