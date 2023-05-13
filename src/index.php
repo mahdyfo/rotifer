@@ -4,12 +4,25 @@ require '../vendor/autoload.php';
 
 use GeneticAutoml\Models\World;
 
-$population = 5;
-$inputs = [1, 0, 0];
-$outputs = [1];
+$population = 3;
+$data = [
+    [[1, 0, 0], [1]]
+];
 
 $world = new World();
-$world->createAgents($population, count($inputs), count($outputs));
+$world->createAgents($population, 3, 1);
+/*$agent1 = new \GeneticAutoml\Models\Agent();
+$agent1->connectNeurons($agent1->findOrCreateNeuron(0, 0), $agent1->findOrCreateNeuron(1, 0), 1.32);
+$agent1->connectNeurons($agent1->findOrCreateNeuron(0, 1), $agent1->findOrCreateNeuron(1, 0), 1.25);
+$agent1->connectNeurons($agent1->findOrCreateNeuron(1, 0), $agent1->findOrCreateNeuron(2, 0), 2.45);
 
-$child = \GeneticAutoml\Helpers\ReproductionHelper::crossover($world->getAgents()[0], $world->getAgents()[1]);
-var_dump($child);
+$agent2 = new \GeneticAutoml\Models\Agent();
+$agent2->connectNeurons($agent2->findOrCreateNeuron(0, 0), $agent2->findOrCreateNeuron(2, 0), 3.56);
+$agent2->connectNeurons($agent2->findOrCreateNeuron(0, 0), $agent2->findOrCreateNeuron(1, 0), 4.84);
+$agent2->connectNeurons($agent2->findOrCreateNeuron(1, 0), $agent2->findOrCreateNeuron(2, 0), 5.55);*/
+
+$fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $otherAgents) {
+    return $agent->getOutputs()[0] * 2;
+};
+
+var_dump($world->nextGeneration($fitnessFunction, $data));
