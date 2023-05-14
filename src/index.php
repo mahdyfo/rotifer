@@ -22,7 +22,7 @@ $agent2->connectNeurons($agent2->findOrCreateNeuron(0, 0), $agent2->findOrCreate
 $agent2->connectNeurons($agent2->findOrCreateNeuron(1, 0), $agent2->findOrCreateNeuron(2, 0), 5.55);*/
 
 $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $otherAgents) {
-    return $agent->getOutputs()[0] * 2;
+    return $agent->getOutputValues()[0] * 2;
 };
 
 var_dump($world->nextGeneration($fitnessFunction, $data));

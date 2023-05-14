@@ -21,7 +21,7 @@ class World
      * @return World
      * @throws Exception
      */
-    public function createAgents(int $count, $inputNeuronsCount, $outputNeuronsCount): self
+    public function createAgents(int $count, $inputNeuronsCount, $outputNeuronsCount, $hasMemory = false): self
     {
         $agents = [];
 
@@ -29,6 +29,7 @@ class World
             $agents[] = (new Agent())
                 ->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount)
                 ->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount)
+                ->setHasMemory($hasMemory)
                 ->initRandomConnections();
         }
 

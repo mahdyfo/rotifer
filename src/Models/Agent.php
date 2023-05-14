@@ -14,6 +14,7 @@ class Agent
     private array $neurons = [];
     private float $fitness = 0;
     private int $step = 0;
+    private bool $hasMemory = false;
 
     /**
      * @param int $type The type of the neuron like Neuron::TYPE_INPUT
@@ -236,15 +237,24 @@ class Agent
 
     /**
      * @param array $inputs
+     * @return Agent
      * @throws Exception
      */
     public function step(array $inputs): Agent
     {
+        /** @var Neuron $neuron */
         // Set inputs
         $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
         foreach ($inputs as $key => $inputValue) {
             /** @var Neuron[] $inputNeurons */
             $inputNeurons[$key]->setValue($inputValue);
+        }
+
+        if (!$this->hasMemory()) {
+            // If the agent doesn't have memory, init hidden neurons with zero
+            foreach ($this->getNeuronsByType(Neuron::TYPE_HIDDEN) as $neuron) {
+                $neuron->setValue(0);
+            }
         }
 
         // Calculate neurons
@@ -255,7 +265,14 @@ class Agent
         foreach ($neuronGroups as $neuronGroup) {
             // Foreach all hidden neurons
             foreach ($neuronGroup as $neuron) {
-                /** @var Neuron $neuron */
+                if ($this->hasMemory() && $neuron->getType() == Neuron::TYPE_HIDDEN) {
+                    // If the agent has memory, use dropout technique (20%) to avoid over-fitting or learning the train-set
+                    if (mt_rand(1, 100) <= 20) {
+                        // Deactivate the neuron
+                        $neuron->setValue(0)->applyActivation();
+                        continue;
+                    }
+                }
                 $newValue = 0;
                 // Foreach inward connections [INPUT => [435 => 2.6, 266 => 1.4], NEURON => [...]]
                 foreach ($neuron->getInConnections() as $type => $neuronsByIndex) {
@@ -277,7 +294,7 @@ class Agent
      * Get the current inputs of the agent
      * @return array
      */
-    public function getInputs(): array
+    public function getInputValues(): array
     {
         $inputs = [];
         foreach ($this->getNeuronsByType(Neuron::TYPE_INPUT) as $input) {
@@ -290,7 +307,7 @@ class Agent
      * Get the current outputs of the agent
      * @return array
      */
-    public function getOutputs(): array
+    public function getOutputValues(): array
     {
         $outputs = [];
         foreach ($this->getNeuronsByType(Neuron::TYPE_OUTPUT) as $output) {
@@ -322,5 +339,17 @@ class Agent
         $this->fitness = $fitness;
 
         return $this;
+    }
+
+    public function setHasMemory(bool $hasMemory = false): self
+    {
+        $this->hasMemory = $hasMemory;
+
+        return $this;
+    }
+
+    public function hasMemory(): bool
+    {
+        return $this->hasMemory;
     }
 }
