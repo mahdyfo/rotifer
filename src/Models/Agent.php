@@ -213,6 +213,11 @@ class Agent
      */
     public function deleteRedundantNeurons(): void
     {
+        // If no input or output connections, delete everything
+        if (empty($this->neurons[Neuron::TYPE_INPUT]) || empty($this->neurons[Neuron::TYPE_OUTPUT])) {
+            $this->deleteAllConnections();
+        }
+
         // No need to remove duplicates. They are automatically replaced because of having same array keys
         $neuronsByIndex = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
         foreach ($neuronsByIndex as $index => $neuron) {
@@ -224,6 +229,14 @@ class Agent
             // Delete neurons with 1 only out-connection just to themselves
             if (
                 count($neuron->getOutConnections()) == 1 &&
+                isset($neuron->getOutConnections()[Neuron::TYPE_HIDDEN][$index])
+            ) {
+                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+            }
+
+            // Delete neurons with 1 only in-connection just from themselves
+            if (
+                count($neuron->getInConnections()) == 1 &&
                 isset($neuron->getOutConnections()[Neuron::TYPE_HIDDEN][$index])
             ) {
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
@@ -245,9 +258,9 @@ class Agent
         /** @var Neuron $neuron */
         // Set inputs
         $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
-        foreach ($inputs as $key => $inputValue) {
-            /** @var Neuron[] $inputNeurons */
-            $inputNeurons[$key]->setValue($inputValue);
+        foreach ($inputNeurons as $key => $inputNeuron) {
+            /** @var Neuron $inputNeuron */
+            $inputNeuron->setValue($inputs[$key]);
         }
 
         if (!$this->hasMemory()) {

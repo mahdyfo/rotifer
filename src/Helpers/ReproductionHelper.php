@@ -102,6 +102,7 @@ class ReproductionHelper
 
     public static function mutate(array $genome, float $changeGeneProbability = 0.2, float $addGeneProbability = 0.2, float $deleteGeneProbability = 0.1): array
     {
+        // TODO: change genome to agent. So we can have more control over connections and neurons. The mutation will be more gene-aware.
         // Mutation types:
         // 1. Delete gene
         // 2. Change gene:
@@ -115,15 +116,12 @@ class ReproductionHelper
         // Gather all indexes
         $indexes = [];
         foreach ($genome as $gene) {
-            $indexes[$gene['from_type']][] = $gene['from_index'];
-
-            if ($gene['to_type'] == Neuron::TYPE_OUTPUT) {
-                $indexes[Neuron::TYPE_OUTPUT][] = $gene['to_index'];
-            }
+            $indexes[$gene['from_type']][$gene['from_index']] = $gene['from_index'];
+            $indexes[$gene['to_type']][$gene['to_index']] = $gene['to_index'];
         }
 
         // 1. Delete gene
-        if (mt_rand(1, 100) / 100 <= $deleteGeneProbability) {
+        if (count($genome) > 1 && mt_rand(1, 100) / 100 <= $deleteGeneProbability) {
             unset($genome[array_rand($genome)]);
         }
 
@@ -136,11 +134,11 @@ class ReproductionHelper
 
             // Get one change randomly
             $change = ['weight']; // In any case, weight can be mutated
-            if (count($indexes[$gene['from_type']]) > 1) {
+            if (count($indexes[$gene['from_type']] ?? []) > 1) {
                 // If there is 1 from-neuron, skip mutation for from. because there is nothing to change to
                 $change[] = 'from';
             }
-            if (count($indexes[$gene['to_type']]) > 1) {
+            if (count($indexes[$gene['to_type']] ?? []) > 1) {
                 // If there is 1 to-neuron, skip mutation for to. because there is nothing to change to
                 $change[] = 'to';
             }
@@ -181,30 +179,48 @@ class ReproductionHelper
 
             switch ($change) {
                 case '1-connection':
-                    $newGene['from_type'] = [Neuron::TYPE_INPUT, Neuron::TYPE_HIDDEN][mt_rand(0, 1)];
+                    if (!empty($indexes[Neuron::TYPE_INPUT])) {
+                        // Has any input neurons
+                        $newGene['from_type'][] = Neuron::TYPE_INPUT;
+                    }
+                    if (!empty($indexes[Neuron::TYPE_HIDDEN])) {
+                        $newGene['from_type'][] = Neuron::TYPE_HIDDEN;
+                        $newGene['to_type'][] = Neuron::TYPE_HIDDEN;
+                    }
+                    if (!empty($indexes[Neuron::TYPE_OUTPUT])) {
+                        $newGene['to_type'][] = Neuron::TYPE_OUTPUT;
+                    }
+                    $newGene['from_type'] = $newGene['from_type'][array_rand($newGene['from_type'])];
+                    $newGene['to_type'] = $newGene['to_type'][array_rand($newGene['to_type'])];
+
                     $newGene['from_index'] = $indexes[$newGene['from_type']][array_rand($indexes[$newGene['from_type']])];
-                    $newGene['to_type'] = [Neuron::TYPE_HIDDEN, Neuron::TYPE_OUTPUT][mt_rand(0, 1)];
                     $newGene['to_index'] = $indexes[$newGene['to_type']][array_rand($indexes[$newGene['to_type']])];
                     $newGene['weight'] = WeightHelper::generateRandomWeight();
                     $genome[] = $newGene;
                     break;
                 case '2-connection':
+                    // New neuron
+
                     // Connection 1:
-                    // From input or hidden
-                    $newGene1['from_type'] = [Neuron::TYPE_INPUT, Neuron::TYPE_HIDDEN][mt_rand(0, 1)];
-                    $newGene1['from_index'] = $indexes[$newGene1['from_type']][array_rand($indexes[$newGene1['from_type']])];
+                    // From input to new hidden neuron
+                    $newGene1['from_type'] = Neuron::TYPE_INPUT;
+                    $newGene1['from_index'] = !empty($indexes[Neuron::TYPE_INPUT])
+                        ? $indexes[Neuron::TYPE_INPUT][array_rand($indexes[Neuron::TYPE_INPUT])]
+                        : 0; // Any network has at least 1 input
                     // To a new hidden
                     $newGene1['to_type'] = Neuron::TYPE_HIDDEN;
-                    $newGene1['to_index'] = count($indexes[Neuron::TYPE_HIDDEN]);
+                    $newGene1['to_index'] = !empty($indexes[Neuron::TYPE_HIDDEN]) ? array_key_last($indexes[Neuron::TYPE_HIDDEN]) : 0;
                     $newGene1['weight'] = WeightHelper::generateRandomWeight();
 
                     // Connection 2:
-                    // From the newly created hidden
+                    // From the newly created hidden to output
                     $newGene2['from_type'] = $newGene1['to_type'];
                     $newGene2['from_index'] = $newGene1['to_index'];
-                    // To a hidden or output
-                    $newGene2['to_type'] = [Neuron::TYPE_HIDDEN, Neuron::TYPE_OUTPUT][mt_rand(0, 1)];
-                    $newGene2['to_index'] = $indexes[$newGene2['to_type']][array_rand($indexes[$newGene2['to_type']])];
+                    // To output
+                    $newGene2['to_type'] = Neuron::TYPE_OUTPUT;
+                    $newGene2['to_index'] = !empty($indexes[Neuron::TYPE_OUTPUT])
+                        ? $indexes[Neuron::TYPE_OUTPUT][array_rand($indexes[Neuron::TYPE_OUTPUT])]
+                        : 0; // Any network has at least 1 output
                     $newGene2['weight'] = WeightHelper::generateRandomWeight();
 
                     $genome[] = $newGene1;
@@ -224,7 +240,7 @@ class ReproductionHelper
      */
     public static function translocation(array $genome, float $probability = 0.2): array
     {
-        if (mt_rand(1, 100) / 100 > $probability) {
+        if (count($genome) <= 1 || mt_rand(1, 100) / 100 > $probability) {
             return $genome;
         }
 

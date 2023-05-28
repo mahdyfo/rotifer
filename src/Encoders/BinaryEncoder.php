@@ -33,7 +33,7 @@ class BinaryEncoder implements Encoder
         $fromType = ($fromType == Neuron::TYPE_INPUT) ? 0 : 1;
 
         // Neuron = 0, Output = 1
-        $toType = ($fromType == Neuron::TYPE_OUTPUT) ? 1 : 0;
+        $toType = ($toType == Neuron::TYPE_OUTPUT) ? 1 : 0;
 
         $weight = round(($weight + WeightHelper::MAX_WEIGHT) * 1000000);
 
