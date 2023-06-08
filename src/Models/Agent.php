@@ -9,6 +9,7 @@ use GeneticAutoml\Helpers\WeightHelper;
 class Agent
 {
     /**
+     * neurons[type][index]
      * @var Neuron[][]
      */
     private array $neurons = [];
@@ -35,7 +36,7 @@ class Agent
         return $this->neurons[$type][$index] = (new Neuron())->setType($type)->setIndex($index);
     }
 
-    public function createNeuron(int $type, $count = 1): self
+    public function createNeuron(int $type, int $count = 1, bool $connectToAll = false): self
     {
         for ($i = 0; $i < $count; $i++) {
             if (empty($this->neurons[$type])) {
@@ -44,6 +45,10 @@ class Agent
                 $index = max(array_keys($this->neurons[$type])) + 1;
             }
             $this->neurons[$type][$index] = (new Neuron())->setType($type)->setIndex($index);
+
+            if ($connectToAll && $type == Neuron::TYPE_HIDDEN) {
+                $this->connectToAll($this->neurons[$type][$index]);
+            }
         }
 
         return $this;
@@ -104,6 +109,38 @@ class Agent
     }
 
     /**
+     * Connects the input neuron to all other neurons and inputs and outputs with random weight
+     * It will be connected to other hidden neurons by 50% chance of in or out connection
+     * @param Neuron $inputNeuron
+     * @return $this
+     * @throws Exception
+     */
+    public function connectToAll(Neuron $inputNeuron): self
+    {
+        foreach ($this->neurons as $type => $neurons) {
+            foreach ($neurons as $index => $neuron) {
+                switch ($type) {
+                    case Neuron::TYPE_INPUT:
+                        $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
+                        break;
+                    case Neuron::TYPE_OUTPUT:
+                        $this->connectNeurons($inputNeuron, $neuron, WeightHelper::generateRandomWeight());
+                        break;
+                    case Neuron::TYPE_HIDDEN:
+                        if (mt_rand(1, 2) == 1) {
+                            $this->connectNeurons($inputNeuron, $neuron, WeightHelper::generateRandomWeight());
+                        } else {
+                            $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
+                        }
+                        break;
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * @param array|string $genome raw array or string encoded genome
      * @param Encoder|null $decoder
      * @param string $separator If you provide string, you should specify the separator between genes
@@ -136,7 +173,7 @@ class Agent
             );
         }
 
-        $this->deleteRedundantNeurons();
+        $this->deleteRedundantGenes();
 
         return $this;
     }
@@ -149,6 +186,13 @@ class Agent
         }
 
         return [];
+    }
+
+    public function removeNeuron(int $type, int $index): self
+    {
+        unset($this->neurons[$type][$index]);
+
+        return $this;
     }
 
     /**
@@ -211,11 +255,12 @@ class Agent
      * Delete stray hidden neurons without any out-connections, or just 1 out-connection to themselves
      * @return void
      */
-    public function deleteRedundantNeurons(): void
+    public function deleteRedundantGenes(): void
     {
         // If no input or output connections, delete everything
         if (empty($this->neurons[Neuron::TYPE_INPUT]) || empty($this->neurons[Neuron::TYPE_OUTPUT])) {
             $this->deleteAllConnections();
+            return;
         }
 
         // No need to remove duplicates. They are automatically replaced because of having same array keys
