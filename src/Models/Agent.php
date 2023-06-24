@@ -17,6 +17,20 @@ class Agent
     private int $step = 0;
     private bool $hasMemory = false;
 
+    public function findNeuron(int $type, int $index): ?Neuron
+    {
+        if ($index < 0 || $index > 65535) {
+            throw new Exception('Index ' . $index . ' is out of allowed range of 65535. Current value: ' . $index);
+        }
+
+        // Find
+        if (isset($this->neurons[$type][$index])) {
+            return $this->neurons[$type][$index];
+        }
+
+        return null;
+    }
+
     /**
      * @param int $type The type of the neuron like Neuron::TYPE_INPUT
      * @param int $index
@@ -29,10 +43,13 @@ class Agent
             throw new Exception('Index ' . $index . ' is out of allowed range of 65535. Current value: ' . $index);
         }
 
-        if (isset($this->neurons[$type][$index])) {
+        // Find
+        $neuron = $this->findNeuron($type, $index);
+        if (!is_null($neuron)) {
             return $this->neurons[$type][$index];
         }
 
+        // Create
         return $this->neurons[$type][$index] = (new Neuron())->setType($type)->setIndex($index);
     }
 
