@@ -72,7 +72,7 @@ class World
         $attempts = 0;
         do {
             // Crossover
-            $newAgent = ReproductionHelper::crossover($agent1, $agent2, 0.5);
+            $newAgent = ReproductionHelper::crossover($agent1, $agent2, PROBABILITY_CROSSOVER);
 
             // Dominance
             //$newGenome = ReproductionHelper::dominance($newGenome1, $newGenome2);
@@ -81,7 +81,7 @@ class World
             //$newGenome = ReproductionHelper::translocation($newGenome);
 
             // Mutation
-            $newAgent = ReproductionHelper::mutate($newAgent, 0.2, 0.1, 0.1);
+            $newAgent = ReproductionHelper::mutate($newAgent, PROBABILITY_MUTATE_WEIGHT, PROBABILITY_MUTATE_ADD_NEURON, PROBABILITY_MUTATE_REMOVE_NEURON);
 
             // Make a fresh agent (remove all neuron values and reset step)
             $newAgent = Agent::createFromGenome($newAgent->getGenomeArray());
@@ -176,24 +176,48 @@ class World
         // Reproduction
         shuffle($fitnessByAgentKey);
         $population = count($this->agents);
+        $tournamentCount = ceil($population / 10);
+        // Chunk agents to several tournaments
+        $tournaments = array_chunk($fitnessByAgentKey, $tournamentCount);
+        // Sort tournament agents by their fitness
+        foreach ($tournaments as $key => $tournament) {
+            usort($tournaments[$key], function($a, $b) {
+                return $b['fitness'] > $a['fitness'] ? 1 : -1;
+            });
+        }
         $newAgents = [];
         $i = 0;
         while(count($newAgents) < $population) {
-            // Go to first of the array again if out of range
-            if ($i > count($fitnessByAgentKey) - 1) {
-                $i = 0;
+            // If tournament doesn't contain any agent
+            if (count($tournaments[$i]) == 0) {
+                continue;
             }
-            $agent1 = $this->agents[$fitnessByAgentKey[$i]['agent_key']];
-            $i++;
-            if ($i > count($fitnessByAgentKey) - 1) {
-                $i = 0;
-            }
-            $agent2 = $this->agents[$fitnessByAgentKey[$i]['agent_key']];
-            $i++;
 
+            // If tournament only contains 1 agent
+            if (count($tournaments[$i]) == 1) {
+                $newAgents[] = $tournaments[$i][array_key_first($tournaments[$i])];
+                unset($tournaments[$i][array_key_first($tournaments[$i])]);
+                continue;
+            }
+
+            // Get 2 first ones from the tournament
+            $firstTournamentAgentKey = array_key_first($tournaments[$i]);
+            $secondTournamentAgentKey = array_key_first($tournaments[$i]);
+            $agent1 = $this->agents[$tournaments[$i][$firstTournamentAgentKey]['agent_key']];
+            $agent2 = $this->agents[$tournaments[$i][$secondTournamentAgentKey]['agent_key']];
+
+            // Remove the ones that already reproduced
+            unset($tournaments[$i][$firstTournamentAgentKey], $tournaments[$i][$secondTournamentAgentKey]);
+
+            // Reproduce 2 children
             $newAgents[] = $this->reproduce($agent1, $agent2);
             if (count($newAgents) < $population) {
                 $newAgents[] = $this->reproduce($agent1, $agent2);
+            }
+
+            $i++;
+            if ($i > array_key_last($tournaments)) {
+                $i = 0; //rewind
             }
         }
 

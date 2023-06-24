@@ -7,9 +7,15 @@ require '../vendor/autoload.php';
  *      --verbose: Shows more details
  */
 
+// Crossover probability, 0.5 mean half genes from mother and half from father
+const PROBABILITY_CROSSOVER = 0.5;
+const PROBABILITY_MUTATE_WEIGHT = 0.05;
+const PROBABILITY_MUTATE_ADD_NEURON = 0.05;
+const PROBABILITY_MUTATE_REMOVE_NEURON = 0.05;
+
 use GeneticAutoml\Models\World;
 
-$population = 100;
+$population = 200;
 $data = [
     [[0, 0, 0], [1]],
     [[0, 0, 1], [0]],
@@ -37,12 +43,17 @@ $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $othe
     $predictedOutput = $agent->getOutputValues()[0];
     $actualOutput = $dataRow[1][0];
 
-    $hiddenCount = count($agent->getNeuronsByType(\GeneticAutoml\Models\Neuron::TYPE_HIDDEN));
-    return (1.0 - abs($predictedOutput - $actualOutput)) / ($hiddenCount + 200);
+    $connections = count($agent->getGenomeArray());
+    return (1.0 - abs($predictedOutput - $actualOutput)) / (pow($connections, 0.25) == 0 ?: 1);
 };
 
 $world->step($fitnessFunction, $data, 200, 0.8);
-var_dump($world->getBestAgent()->getFitness(), count($world->getBestAgent()->getNeuronsByType(\GeneticAutoml\Models\Neuron::TYPE_HIDDEN)), $world->getBestAgent()->getGenomeString(\GeneticAutoml\Encoders\HumanEncoder::getInstance()));
+var_dump(
+    'Fitness: ' . $world->getBestAgent()->getFitness(),
+    'Hidden neurons: ' . count($world->getBestAgent()->getNeuronsByType(\GeneticAutoml\Models\Neuron::TYPE_HIDDEN)),
+    'Connections: ' . count($world->getBestAgent()->getGenomeArray()),
+    $world->getBestAgent()->getGenomeString(\GeneticAutoml\Encoders\HumanEncoder::getInstance())
+);
 
 // test
 $agent = $world->getBestAgent();
