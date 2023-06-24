@@ -15,6 +15,8 @@ class World
      */
     private array $agents = [];
 
+    private int $generation = 1;
+
     private ?Agent $bestAgent = null;
 
     /**
@@ -66,37 +68,36 @@ class World
      */
     public function reproduce(Agent $agent1, Agent $agent2): Agent
     {
-        $genome1 = $agent1->getGenomeArray();
-        $genome2 = $agent2->getGenomeArray();
-
         // Do the reproduction process and if there is no gene, repeat the reproduction
         $attempts = 0;
         do {
             // Crossover
-            [$newGenome1, $newGenome2] = ReproductionHelper::crossover($genome1, $genome2);
+            $newAgent = ReproductionHelper::crossover($agent1, $agent2, 0.5);
 
             // Dominance
-            $newGenome = ReproductionHelper::dominance($newGenome1, $newGenome2);
-
-            // Mutation
-            $newGenome = ReproductionHelper::mutate($newGenome);
+            //$newGenome = ReproductionHelper::dominance($newGenome1, $newGenome2);
 
             // Translocation
-            $newGenome = ReproductionHelper::translocation($newGenome);
+            //$newGenome = ReproductionHelper::translocation($newGenome);
 
-            $agent = Agent::createFromGenome($newGenome);
+            // Mutation
+            $newAgent = ReproductionHelper::mutate($newAgent, 0.2, 0.1, 0.1);
+
+            // Make a fresh agent (remove all neuron values and reset step)
+            $newAgent = Agent::createFromGenome($newAgent->getGenomeArray());
 
             $attempts++;
             if ($attempts > 100) {
+                //return $agent1;
                 throw new Exception('Tried ' . $attempts
                     . ' times to reproduce but it always generated agent with no genes. genome1: '
                     . $agent1->getGenomeString(HumanEncoder::getInstance())
                     . ' genome2: ' . $agent2->getGenomeString(HumanEncoder::getInstance())
                 );
             }
-        } while (empty($agent->getGenomeArray()));
+        } while (empty($newAgent->getGenomeArray()));
 
-        return $agent;
+        return $newAgent;
     }
 
     /**
@@ -112,6 +113,7 @@ class World
     {
         for ($i = 0; $i < $generationCount; $i++) {
             $this->nextGeneration($fitnessFunction, $data, $surviveRate);
+            $this->generation++;
         }
 
         return $this;
@@ -157,9 +159,14 @@ class World
         // Save best agent
         $highestFitness = $fitnessByAgentKey[0]['fitness'];
         // If the best in this generation was better that the best in the previous generations
-        if (!$this->bestAgent || $this->bestAgent->getFitness() < $highestFitness) {
+        if (empty($this->bestAgent) || $this->bestAgent->getFitness() < $highestFitness) {
             $bestAgentKey = $fitnessByAgentKey[0]['agent_key'];
             $this->bestAgent = $this->agents[$bestAgentKey];
+        }
+
+        if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
+            echo 'Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . PHP_EOL;
+            flush();
         }
 
         // Survival

@@ -41,64 +41,46 @@ class ReproductionHelper
     /**
      * Makes two new genomes that are crossed over.
      * Crossover is possible in from-connection / to-connection / weight
-     * @param array $genome1
-     * @param array $genome2
+     * @param Agent $agent1
+     * @param Agent $agent2
      * @param float $probability
-     * @return array Two new genomes
+     * @return Agent Two new genomes
+     * @throws \Exception
      */
-    public static function crossover(array $genome1, array $genome2, float $probability = 0.2): array
+    public static function crossover(Agent $agent1, Agent $agent2, float $probability = 0.2): Agent
     {
-        // AAA BBB CCC DDD EEE
-        // FFF GGG HHH III JJJ KKK
-        // Results:
-        // AFA BGG HCC IDI JEJ
-        // FAF GBB CHH DID EJE KKK
-        foreach ($genome1 as $geneIndex => $gene) {
-            // If the other genome is shorter, continue
-            if (!isset($genome2[$geneIndex])) {
-                continue;
-            }
+        // Agent1: AA[A]  BBB  CC[C]  DDD  EE[E]
+        // Agent2: FF[F]  GGG  HH[H]  III  JJ[J]
+        // Result:
+        // Agentx: AA F   BBB  CC H   DDD  EE J (Changed agent1)
 
+        $newAgent = Agent::createFromGenome($agent1->getGenomeArray());
+
+        $genome2 = $agent2->getGenomeArray();
+        // Iterate through all connections of agent2
+        foreach ($genome2 as $gene) {
             // Continue if the probability is not met
             if (mt_rand(1, 100) / 100 > $probability) {
                 continue;
             }
 
-            $crossoverPlaces = [/*'from', 'to',*/ 'weight'];
-            foreach ($crossoverPlaces as $crossoverPlace) {
-                // Swap
-                switch ($crossoverPlace) {
-                    // Swap from_type and from_index
-                    case 'from':
-                        $tempSwapVar = $genome2[$geneIndex]['from_type'];
-                        $genome2[$geneIndex]['from_type'] = $genome1[$geneIndex]['from_type'];
-                        $genome1[$geneIndex]['from_type'] = $tempSwapVar;
-                        $tempSwapVar = $genome2[$geneIndex]['from_index'];
-                        $genome2[$geneIndex]['from_index'] = $genome1[$geneIndex]['from_index'];
-                        $genome1[$geneIndex]['from_index'] = $tempSwapVar;
-                        break;
-                    // Swap to_type and to_index
-                    case 'to':
-                        $tempSwapVar = $genome2[$geneIndex]['to_type'];
-                        $genome2[$geneIndex]['to_type'] = $genome1[$geneIndex]['to_type'];
-                        $genome1[$geneIndex]['to_type'] = $tempSwapVar;
-                        $tempSwapVar = $genome2[$geneIndex]['to_index'];
-                        $genome2[$geneIndex]['to_index'] = $genome1[$geneIndex]['to_index'];
-                        $genome1[$geneIndex]['to_index'] = $tempSwapVar;
-                        break;
-                    // Swap weights
-                    case 'weight':
-                        $tempSwapVar = $genome2[$geneIndex]['weight'];
-                        $genome2[$geneIndex]['weight'] = $genome1[$geneIndex]['weight'];
-                        $genome1[$geneIndex]['weight'] = $tempSwapVar;
-                        break;
-                    default:
-                        break;
+            // Try to find the connections of agent2 in agent1
+            // Find agent2 neuron origin in agent1
+            $originNeuronInAgent1 = $newAgent->findNeuron($gene['from_type'], $gene['from_index']);
+            // If the same neuron origin exist in the agent1
+            if (!empty($originNeuronInAgent1)) {
+                // Find out if neuron destination exist in agent1 too
+                $destNeuronInAgent1 = $newAgent->findNeuron($gene['to_type'], $gene['to_index']);
+                if (!empty($destNeuronInAgent1)) {
+                    // Set weight of agent2 connection in agent1 connection or create the connection if there is none
+                    $newAgent = $newAgent->connectNeurons($originNeuronInAgent1, $destNeuronInAgent1, $gene['weight']);
                 }
             }
         }
 
-        return [$genome1, $genome2];
+        $newAgent->deleteRedundantGenes();
+
+        return $newAgent;
     }
 
     /**
@@ -169,6 +151,8 @@ class ReproductionHelper
                 }
             }
         }
+
+        $agent->deleteRedundantGenes();
 
         return $agent;
     }
