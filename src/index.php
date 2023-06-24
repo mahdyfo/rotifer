@@ -33,13 +33,13 @@ $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $othe
     $actualOutput = $dataRow[1][0];
 
     $connections = count($agent->getGenomeArray());
-    return (1.0 - abs($predictedOutput - $actualOutput)) / (pow($connections, 0.25) == 0 ?: 1);
+    return (1.0 - abs($predictedOutput - $actualOutput)) / (pow($connections, 0.3) == 0 ?: 1);
 };
 
 // World
 $world = new World();
 $world->createAgents($population, 3, 1);
-$world->step($fitnessFunction, $data, 100, 0.8);
+$world->step($fitnessFunction, $data, 200, 0.8);
 
 // Report
 var_dump(\GeneticAutoml\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
