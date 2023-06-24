@@ -74,12 +74,6 @@ class World
             // Crossover
             $newAgent = ReproductionHelper::crossover($agent1, $agent2, PROBABILITY_CROSSOVER);
 
-            // Dominance
-            //$newGenome = ReproductionHelper::dominance($newGenome1, $newGenome2);
-
-            // Translocation
-            //$newGenome = ReproductionHelper::translocation($newGenome);
-
             // Mutation
             $newAgent = ReproductionHelper::mutate($newAgent, PROBABILITY_MUTATE_WEIGHT, PROBABILITY_MUTATE_ADD_NEURON, PROBABILITY_MUTATE_REMOVE_NEURON);
 

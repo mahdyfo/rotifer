@@ -8,37 +8,6 @@ use GeneticAutoml\Models\Neuron;
 class ReproductionHelper
 {
     /**
-     * @param array $genome1
-     * @param array $genome2
-     * @param float $lowestDominance
-     * @param float $highestDominance
-     * @return array New genome
-     */
-    public static function dominance(array $genome1, array $genome2, float $lowestDominance = 0.3, float $highestDominance = 0.7): array
-    {
-        $genomes = [$genome1, $genome2];
-        shuffle($genomes);
-
-        $crossPoint = mt_rand($lowestDominance * 100, $highestDominance * 100) / 100;
-        $crossPoint = round($crossPoint * count($genomes[0]));
-
-        // Always > 0, at least 1
-        if ($crossPoint == 0 && count($genomes[0]) > 1) {
-            $crossPoint = 1;
-        }
-
-        // Always < max length, max count - 1
-        if ($crossPoint == count($genomes[0])) {
-            $crossPoint = count($genomes[0]) - 1;
-        }
-
-        $part1 = array_slice($genomes[0], 0, $crossPoint);
-        $part2 = array_slice($genomes[1], $crossPoint);
-
-        return array_merge($part1, $part2);
-    }
-
-    /**
      * Makes two new genomes that are crossed over.
      * Crossover is possible in from-connection / to-connection / weight
      * @param Agent $agent1
@@ -155,25 +124,5 @@ class ReproductionHelper
         $agent->deleteRedundantGenes();
 
         return $agent;
-    }
-
-    /**
-     * Move gene: Translocation or change position of a gene in the genome
-     * @param array $genome
-     * @param float $probability
-     * @return array Genome
-     */
-    public static function translocation(array $genome, float $probability = 0.2): array
-    {
-        if (count($genome) <= 1 || mt_rand(1, 100) / 100 > $probability) {
-            return $genome;
-        }
-
-        $randomIndexes = array_rand($genome, 2);
-        $tempSwapVar = $genome[$randomIndexes[0]];
-        $genome[$randomIndexes[0]] = $genome[$randomIndexes[1]];
-        $genome[$randomIndexes[1]] = $tempSwapVar;
-
-        return $genome;
     }
 }
