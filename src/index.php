@@ -27,18 +27,7 @@ $data = [
     [[1, 1, 1], [1]],
 ];
 
-$world = new World();
-$world->createAgents($population, 3, 1);
-/*$agent1 = new \GeneticAutoml\Models\Agent();
-$agent1->connectNeurons($agent1->findOrCreateNeuron(0, 0), $agent1->findOrCreateNeuron(1, 0), 1.32);
-$agent1->connectNeurons($agent1->findOrCreateNeuron(0, 1), $agent1->findOrCreateNeuron(1, 0), 1.25);
-$agent1->connectNeurons($agent1->findOrCreateNeuron(1, 0), $agent1->findOrCreateNeuron(2, 0), 2.45);
-
-$agent2 = new \GeneticAutoml\Models\Agent();
-$agent2->connectNeurons($agent2->findOrCreateNeuron(0, 0), $agent2->findOrCreateNeuron(2, 0), 3.56);
-$agent2->connectNeurons($agent2->findOrCreateNeuron(0, 0), $agent2->findOrCreateNeuron(1, 0), 4.84);
-$agent2->connectNeurons($agent2->findOrCreateNeuron(1, 0), $agent2->findOrCreateNeuron(2, 0), 5.55);*/
-
+// Fitness
 $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $otherAgents) {
     $predictedOutput = $agent->getOutputValues()[0];
     $actualOutput = $dataRow[1][0];
@@ -47,15 +36,15 @@ $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $othe
     return (1.0 - abs($predictedOutput - $actualOutput)) / (pow($connections, 0.25) == 0 ?: 1);
 };
 
-$world->step($fitnessFunction, $data, 200, 0.8);
-var_dump(
-    'Fitness: ' . $world->getBestAgent()->getFitness(),
-    'Hidden neurons: ' . count($world->getBestAgent()->getNeuronsByType(\GeneticAutoml\Models\Neuron::TYPE_HIDDEN)),
-    'Connections: ' . count($world->getBestAgent()->getGenomeArray()),
-    $world->getBestAgent()->getGenomeString(\GeneticAutoml\Encoders\HumanEncoder::getInstance())
-);
+// World
+$world = new World();
+$world->createAgents($population, 3, 1);
+$world->step($fitnessFunction, $data, 100, 0.8);
 
-// test
+// Report
+var_dump(\GeneticAutoml\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
+
+// Test
 $agent = $world->getBestAgent();
 foreach ($data as $row) {
     $agent->step($row[0]);
