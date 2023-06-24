@@ -9,18 +9,18 @@ class Activation
         return 1 / (1 + pow(M_E, -$value));
     }
 
-    public function relu()
+    public static function relu(float $value): float
     {
-
+        return max(0, $value);
     }
 
-    public function tanh()
+    public static function tanh(float $value): float
     {
-
+        return tanh($value);
     }
 
-    public function threshold()
+    public static function threshold(float $value): float
     {
-
+        return $value < 0 ? 0 : 1;
     }
 }
