@@ -12,7 +12,7 @@ const PROBABILITY_CROSSOVER = 0.5;
 const PROBABILITY_MUTATE_WEIGHT = 0.05;
 const PROBABILITY_MUTATE_ADD_NEURON = 0.05;
 const PROBABILITY_MUTATE_REMOVE_NEURON = 0.05;
-const SAVE_WORLD_EVERY_GENERATION = 10; // Every x generations, saves world and best agent
+const SAVE_WORLD_EVERY_GENERATION = 50; // Every x generations, saves world and best agent
 
 use GeneticAutoml\Models\World;
 
@@ -34,7 +34,7 @@ $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $othe
     $actualOutput = $dataRow[1][0];
 
     $connections = count($agent->getGenomeArray());
-    return (1.0 - abs($predictedOutput - $actualOutput))/* / (pow($connections, 0.5) == 0 ?: 1)*/;
+    return (1.0 - abs($predictedOutput - $actualOutput)) / (pow($connections, 0.5) == 0 ?: 1);
 };
 
 // World
