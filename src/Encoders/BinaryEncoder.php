@@ -60,14 +60,4 @@ class BinaryEncoder implements Encoder
             'weight' => (bindec($weight) / 1000000) - WeightHelper::MAX_WEIGHT,
         ];
     }
-
-    public static function binToHex(string $binaryString): string
-    {
-        return base_convert($binaryString, 2, 16);
-    }
-
-    public static function hexToBin(string $hexString): string
-    {
-        return base_convert($hexString, 16, 2);
-    }
 }
