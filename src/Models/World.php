@@ -219,12 +219,12 @@ class World
             $this->bestAgent = $this->agents[$bestAgentKey];
 
             // Save best agent in file
-            file_put_contents('best_agent.txt', $this->bestAgent->getGenomeString(HexEncoder::getInstance()));
+            file_put_contents('autosave/best_agent.txt', $this->bestAgent->getGenomeString(HexEncoder::getInstance()));
         }
 
         // Save world in file
         if ($this->generation % SAVE_WORLD_EVERY_GENERATION == 0) {
-            file_put_contents('world.txt', $this->getGenomesString(HexEncoder::getInstance()));
+            file_put_contents('autosave/world.txt', $this->getGenomesString(HexEncoder::getInstance()));
         }
 
         if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
