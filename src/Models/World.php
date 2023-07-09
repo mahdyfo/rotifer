@@ -5,6 +5,7 @@ namespace GeneticAutoml\Models;
 use Exception;
 use GeneticAutoml\Encoders\BinaryEncoder;
 use GeneticAutoml\Encoders\Encoder;
+use GeneticAutoml\Encoders\HexEncoder;
 use GeneticAutoml\Encoders\HumanEncoder;
 use GeneticAutoml\Helpers\ReproductionHelper;
 
@@ -214,7 +215,16 @@ class World
         // If the best in this generation was better that the best in the previous generations
         if (empty($this->bestAgent) || $this->bestAgent->getFitness() < $highestFitness) {
             $bestAgentKey = $fitnessByAgentKey[0]['agent_key'];
+            // Save best agent in world instance
             $this->bestAgent = $this->agents[$bestAgentKey];
+
+            // Save best agent in file
+            file_put_contents('best_agent.txt', $this->bestAgent->getGenomeString(HexEncoder::getInstance()));
+        }
+
+        // Save world in file
+        if ($this->generation % SAVE_WORLD_EVERY_GENERATION == 0) {
+            file_put_contents('world.txt', $this->getGenomesString(HexEncoder::getInstance()));
         }
 
         if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
