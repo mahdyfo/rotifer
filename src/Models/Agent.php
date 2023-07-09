@@ -344,7 +344,7 @@ class Agent
                     // If the agent has memory, use dropout technique (20%) to avoid over-fitting or learning the train-set
                     if (mt_rand(1, 100) <= 20) {
                         // Deactivate the neuron
-                        $neuron->setValue(0)->applyActivation();
+                        $neuron->setValue(0);
                         continue;
                     }
                 }
