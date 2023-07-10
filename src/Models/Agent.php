@@ -310,6 +310,15 @@ class Agent
         }
     }
 
+    public function resetPreviousValues(): self
+    {
+        foreach ($this->getNeuronsByType(Neuron::TYPE_HIDDEN) as $neuron) {
+            $neuron->setPreviousValue(0);
+        }
+
+        return $this;
+    }
+
     /**
      * @param array $inputs
      * @return Agent
@@ -340,20 +349,17 @@ class Agent
         foreach ($neuronGroups as $neuronGroup) {
             // Foreach all hidden neurons
             foreach ($neuronGroup as $neuron) {
-                if ($this->hasMemory() && $neuron->getType() == Neuron::TYPE_HIDDEN) {
-                    // If the agent has memory, use dropout technique (20%) to avoid over-fitting or learning the train-set
-                    if (mt_rand(1, 100) <= 20) {
-                        // Deactivate the neuron
-                        $neuron->setValue(0);
-                        continue;
-                    }
-                }
                 $newValue = 0;
                 // Foreach inward connections [INPUT => [435 => 2.6, 266 => 1.4], NEURON => [...]]
                 foreach ($neuron->getInConnections() as $type => $neuronsByIndex) {
                     foreach ($neuronsByIndex as $index => $weight) {
-                        // Neuron value += inward neuron value * weight
-                        $newValue += $this->findOrCreateNeuron($type, $index)->getValue() * $weight;
+                        if ($this->hasMemory() && $type == Neuron::TYPE_HIDDEN) {
+                            // If reading from hidden and has memory, consider the previous value
+                            $newValue += $this->findOrCreateNeuron($type, $index)->getPreviousValue() * $weight;
+                        } else {
+                            // Neuron value += inward neuron value * weight
+                            $newValue += $this->findOrCreateNeuron($type, $index)->getValue() * $weight;
+                        }
                     }
                 }
                 $neuron->setValue($newValue)->applyActivation();

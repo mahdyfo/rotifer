@@ -151,6 +151,15 @@ class World
             }
         } while (empty($newAgent->getGenomeArray()));
 
+        if ($agent1->hasMemory() && $agent2->hasMemory()) {
+            $newAgent->setHasMemory(true);
+        } elseif ($agent1->hasMemory() || $agent2->hasMemory()) {
+            // If one of them has memory, with 50% chance the child has memory too
+            $newAgent->setHasMemory(mt_rand(1, 2) == 1);
+        } else {
+            $newAgent->setHasMemory(false);
+        }
+
         return $newAgent;
     }
 
@@ -187,6 +196,9 @@ class World
         // Step all agents
         $fitnessByAgentKey = [];
         foreach ($this->agents as $key => $agent) {
+            // Reset any previous memory
+            $agent->resetPreviousValues();
+
             // Each data
             $fitness = 0;
             foreach ($data as $row) {
@@ -196,7 +208,7 @@ class World
                 // Feed data into fitness function
                 $otherAgents = $this->getAgents();
                 unset($otherAgents[$key]);
-                $fitness += $fitnessFunction($this->agents[$key], $row, $otherAgents);
+                $fitness += $fitnessFunction($this->agents[$key], $row, $otherAgents, $this);
             }
             $this->agents[$key]->setFitness($fitness);
             $fitnessByAgentKey[] = [
