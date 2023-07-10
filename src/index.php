@@ -18,18 +18,14 @@ use GeneticAutoml\Models\World;
 
 $population = 200;
 $data = [
-    [[0, 0, 0], [1]],
-    [[0, 0, 1], [0.9]],
-    [[0, 1, 0], [0.8]],
-    [[0, 1, 1], [0.7]],
+    [[1, 0, 0], [0]],
     [[1, 0, 0], [1]],
-    [[1, 0, 1], [0.5]],
-    [[1, 1, 0], [0.4]],
-    [[1, 1, 1], [0.3]],
+    [[1, 0, 0], [1]],
+    [[1, 0, 0], [0]],
 ];
 
 // Fitness
-$fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $otherAgents) {
+$fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $otherAgents, $world) {
     $predictedOutput = $agent->getOutputValues()[0];
     $actualOutput = $dataRow[1][0];
 
@@ -39,15 +35,16 @@ $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $othe
 
 // World
 $world = new World();
-$world->createAgents($population, 3, 1);
-$world->step($fitnessFunction, $data, 300, 0.8);
+$world->createAgents($population, 3, 1, true);
+$world->step($fitnessFunction, $data, 30, 0.8);
 
 // Report
 var_dump(\GeneticAutoml\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
 
 // Test
 $agent = $world->getBestAgent();
+$agent->resetPreviousValues();
 foreach ($data as $row) {
     $agent->step($row[0]);
-    var_dump(round($agent->getOutputValues()[0], 1) . ' - ' . $agent->getOutputValues()[0]);
+    var_dump('Input: ' . implode(',', $row[0]) . ' - Round: ' . round($agent->getOutputValues()[0]) . ' - Raw: ' . $agent->getOutputValues()[0]);
 }
