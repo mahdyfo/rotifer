@@ -167,16 +167,21 @@ class World
      * Run each agent with the data. The count of training rows is the age of the agent
      * @param mixed $fitnessFunction Your custom function to calculate the fitness value for each agent
      * @param array $data [ [[input1, input2, input3], [output1, output2]], [[inputX, inputY, inputZ], [outputA, outputB]] ]
+     * @param int $generationCount how many generations to pass, 0 for unlimited
      * @param float $surviveRate How many percent of the population should pass to the next generation
-     * @param int $generationCount how many generations to pass
+     * @param mixed $stopFunction The minimum fitness that eliminates the world
      * @return World
      * @throws Exception
      */
-    public function step($fitnessFunction, array $data, int $generationCount = 1, float $surviveRate = 0.9): self
+    public function step($fitnessFunction, array $data, int $generationCount = 1, float $surviveRate = 0.9, $stopFunction = null): self
     {
-        for ($i = 0; $i < $generationCount; $i++) {
+        while ($generationCount == 0 || $this->generation <= $generationCount) {
             $this->nextGeneration($fitnessFunction, $data, $surviveRate);
             $this->generation++;
+            // If best fitness passes stop fitness, stop the world
+            if (!is_null($stopFunction) && $stopFunction($this)) {
+                return $this;
+            }
         }
 
         return $this;
@@ -197,7 +202,7 @@ class World
         $fitnessByAgentKey = [];
         foreach ($this->agents as $key => $agent) {
             // Reset any previous memory
-            $agent->resetPreviousValues();
+            $agent->resetValues();
 
             // Each data
             $fitness = 0;

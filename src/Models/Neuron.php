@@ -12,7 +12,6 @@ class Neuron
 
     private int $index;
     private int $type;
-    private float $previousValue = 0;
     private float $value = 0;
 
     /**
@@ -36,8 +35,6 @@ class Neuron
 
     public function setValue(float $value): self
     {
-        $this->setPreviousValue($this->value);
-
         $this->value = $value;
 
         return $this;
@@ -46,18 +43,6 @@ class Neuron
     public function getValue(): float
     {
         return $this->value;
-    }
-
-    public function setPreviousValue(float $value): self
-    {
-        $this->previousValue = $value;
-
-        return $this;
-    }
-
-    public function getPreviousValue(): float
-    {
-        return $this->previousValue;
     }
 
     public function applyActivation($activation = null): void
