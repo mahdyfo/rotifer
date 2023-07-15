@@ -16,6 +16,7 @@ class Agent
     private float $fitness = 0;
     private int $step = 0;
     private bool $hasMemory = false;
+    private array $additional = [];
 
     public function findNeuron(int $type, int $index): ?Neuron
     {
@@ -427,5 +428,25 @@ class Agent
     public function hasMemory(): bool
     {
         return $this->hasMemory;
+    }
+
+    /**
+     * Get additional custom user data
+     * @return array
+     */
+    public function getAdditional(): array
+    {
+        return $this->additional;
+    }
+
+    /**
+     * Set additional custom user data
+     * @param array $additional
+     */
+    public function setAdditional(array $additional): self
+    {
+        $this->additional = $additional;
+
+        return $this;
     }
 }
