@@ -46,6 +46,13 @@ class World
         return $this->setAgents($agents);
     }
 
+    public static function loadAutoSaved($path = 'autosave/world.txt'): self
+    {
+        $fileContents = file_get_contents($path);
+
+        return self::createFromGenomesString($fileContents, HexEncoder::getInstance());
+    }
+
     /**
      * @return Agent[]
      */
@@ -220,6 +227,10 @@ class World
                 'fitness' => $fitness,
                 'agent_key' => $key
             ];
+            if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
+                echo 'A';
+                flush();
+            }
         }
 
         // Sort agent keys by their fitness
@@ -245,7 +256,7 @@ class World
         }
 
         if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
-            echo 'Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . PHP_EOL;
+            echo ' Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . PHP_EOL;
             flush();
         }
 
@@ -271,6 +282,26 @@ class World
             $genomes[] = $agent->getGenomeString($encoder, $geneSeparator, $geneIterationCallback);
         }
         return implode($genomeSeparator, $genomes);
+    }
+
+    public static function createFromGenomesString($genomes, Encoder $decoder = null, $geneSeparator = ';', $genomeSeparator = "\n"): self
+    {
+        $world = new self();
+
+        if (is_null($decoder)) {
+            $decoder = BinaryEncoder::getInstance();
+        }
+
+        $genomes = explode($genomeSeparator, $genomes);
+
+        $agents = [];
+        foreach ($genomes as $genome) {
+            $agents[] = Agent::createFromGenome($genome, $decoder, $geneSeparator);
+        }
+
+        $world->setAgents($agents);
+
+        return $world;
     }
 
     public function getBestAgent(): ?Agent
