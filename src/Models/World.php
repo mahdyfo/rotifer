@@ -46,11 +46,16 @@ class World
         return $this->setAgents($agents);
     }
 
-    public static function loadAutoSaved($path = 'autosave/world.txt'): self
+    public static function loadAutoSaved(): self
     {
-        $fileContents = file_get_contents($path);
+        $world = file_get_contents('autosave/world.txt');
+        $world = self::createFromGenomesString($world, HexEncoder::getInstance());
 
-        return self::createFromGenomesString($fileContents, HexEncoder::getInstance());
+        $bestAgent = file_get_contents('autosave/best_agent.txt');
+        $world->bestAgent = Agent::createFromGenome($bestAgent, HexEncoder::getInstance());
+        $world->agents[array_key_last($world->agents)] = $world->bestAgent;
+
+        return $world;
     }
 
     /**
@@ -228,7 +233,8 @@ class World
                 'agent_key' => $key
             ];
             if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
-                echo 'A';
+                if (!isset($percent)) $percent = 1;
+                echo 'Generation ' . $this->generation . ' - ' . min(100, str_pad(round(($percent++) * 100 / count($this->agents), 1), 4)) . "%\r";
                 flush();
             }
         }
@@ -239,12 +245,14 @@ class World
         });
 
         // Save best agent
+        $improved = false;
         $highestFitness = $fitnessByAgentKey[0]['fitness'];
         // If the best in this generation was better that the best in the previous generations
         if (empty($this->bestAgent) || $this->bestAgent->getFitness() < $highestFitness) {
             $bestAgentKey = $fitnessByAgentKey[0]['agent_key'];
             // Save best agent in world instance
             $this->bestAgent = $this->agents[$bestAgentKey];
+            $improved = true;
 
             // Save best agent in file
             file_put_contents('autosave/best_agent.txt', $this->bestAgent->getGenomeString(HexEncoder::getInstance()));
@@ -256,7 +264,7 @@ class World
         }
 
         if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
-            echo ' Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . PHP_EOL;
+            echo 'Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . ($improved ? ' - Improved' : null) . PHP_EOL;
             flush();
         }
 
