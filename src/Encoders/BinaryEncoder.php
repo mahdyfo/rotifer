@@ -46,9 +46,10 @@ class BinaryEncoder implements Encoder
 
     public function decodeConnection(string $encodedGene): array
     {
-        $fromType = substr($encodedGene, 0, 1) == "0" ? Neuron::TYPE_INPUT : Neuron::TYPE_HIDDEN;
+        $encodedGene = str_pad($encodedGene, 58, '0', STR_PAD_LEFT);
+        $fromType = substr($encodedGene, 0, 1) == '0' ? Neuron::TYPE_INPUT : Neuron::TYPE_HIDDEN;
         $fromIndex = substr($encodedGene, 1, 16);
-        $toType = substr($encodedGene, 17, 1) == "0" ? Neuron::TYPE_HIDDEN : Neuron::TYPE_OUTPUT;
+        $toType = substr($encodedGene, 17, 1) == '0' ? Neuron::TYPE_HIDDEN : Neuron::TYPE_OUTPUT;
         $toIndex = substr($encodedGene, 18, 16);
         $weight = substr($encodedGene, 34, 24);
 
