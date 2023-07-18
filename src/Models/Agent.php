@@ -284,11 +284,6 @@ class Agent
         // No need to remove duplicates. They are automatically replaced because of having same array keys
         $neuronsByIndex = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
         foreach ($neuronsByIndex as $index => $neuron) {
-            // Delete stray neurons without any out-connections
-            if (count($neuron->getOutConnections()) == 0) {
-                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
-            }
-
             // Delete neurons with 1 only out-connection just to themselves
             if (
                 count($neuron->getOutConnections()) == 1 &&
@@ -302,6 +297,16 @@ class Agent
                 count($neuron->getInConnections()) == 1 &&
                 isset($neuron->getOutConnections()[Neuron::TYPE_HIDDEN][$index])
             ) {
+                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+            }
+
+            // Delete stray neurons without any out-connections
+            if (count($neuron->getOutConnections()) == 0) {
+                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+            }
+
+            // Delete stray neurons without any in & out-connections
+            if (count($neuron->getInConnections()) == 0 && count($neuron->getOutConnections()) == 0) {
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
             }
         }
@@ -358,7 +363,7 @@ class Agent
                         $newValue += $this->findOrCreateNeuron($type, $index)->getValue() * $weight;
                     }
                 }
-                $neuron->setValue($newValue)->applyActivation();
+                $neuron->setValue($newValue)->applyActivation(ACTIVATION);
             }
         }
 

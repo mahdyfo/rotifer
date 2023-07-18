@@ -1,6 +1,8 @@
 <?php
 
 require '../vendor/autoload.php';
+use GeneticAutoml\Activations\Activation;
+use GeneticAutoml\Models\World;
 
 /**
  * Options
@@ -12,9 +14,8 @@ const PROBABILITY_CROSSOVER = 0.5;
 const PROBABILITY_MUTATE_WEIGHT = 0.1;
 const PROBABILITY_MUTATE_ADD_NEURON = 0.05;
 const PROBABILITY_MUTATE_REMOVE_NEURON = 0.05;
+const ACTIVATION = [Activation::class, 'sigmoid'];
 const SAVE_WORLD_EVERY_GENERATION = 50; // Every x generations, saves world and best agent
-
-use GeneticAutoml\Models\World;
 
 $population = 200;
 $data = [
