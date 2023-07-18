@@ -64,7 +64,7 @@ class ReproductionHelper
     public static function mutate(Agent $agent, float $changeGeneProbability = 0.5, float $addNeuronProbability = 0.3, float $deleteNeuronProbability = 0.1): Agent
     {
         // 1. Add neuron
-        if (mt_rand(1, 100) / 100 <= $addNeuronProbability) {
+        if (mt_rand(1, 10000) / 10000 <= $addNeuronProbability) {
             $agent->createNeuron(Neuron::TYPE_HIDDEN, 1, true);
         }
 
@@ -73,7 +73,7 @@ class ReproductionHelper
         $changedGenome = false;
         foreach ($genome as $key => $gene) {
             // Continue if the probability is not met
-            if (mt_rand(1, 100) / 100 > $changeGeneProbability) {
+            if (mt_rand(1, 10000) / 10000 > $changeGeneProbability) {
                 continue;
             }
 
@@ -85,7 +85,7 @@ class ReproductionHelper
         }
 
         // 3. Delete neuron
-        if (mt_rand(1, 100) / 100 <= $deleteNeuronProbability) {
+        if (mt_rand(1, 10000) / 10000 <= $deleteNeuronProbability) {
             $hiddens = $agent->getNeuronsByType(Neuron::TYPE_HIDDEN);
 
             // There should be at least one hidden neuron to delete
