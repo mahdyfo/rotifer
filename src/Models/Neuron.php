@@ -89,8 +89,11 @@ class Neuron
         return $this;
     }
 
-    public function deleteConnections(): array
+    public function deleteConnections(): bool
     {
-        return $this->inConnections = [];
+        $this->inConnections = [];
+        $this->outConnections = [];
+
+        return true;
     }
 }
