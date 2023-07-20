@@ -5,7 +5,7 @@ I believe the most powerful AI is the one which creates itself. A complex struct
 
 Run:
 ```
-php src/index.php --verbose
+php src/index.php
 ```
 
 ## Main Parts

@@ -232,7 +232,7 @@ class World
                 'fitness' => $fitness,
                 'agent_key' => $key
             ];
-            if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
+            if (!in_array('--quiet', $_SERVER['argv'] ?? [])) {
                 if (!isset($percent)) $percent = 1;
                 echo 'Generation ' . $this->generation . ' - ' . min(100, str_pad(round(($percent++) * 100 / count($this->agents), 1), 4)) . "%\r";
                 flush();
@@ -263,7 +263,7 @@ class World
             file_put_contents('autosave/world.txt', $this->getGenomesString(HexEncoder::getInstance()));
         }
 
-        if (in_array('--verbose', $_SERVER['argv'] ?? [])) {
+        if (!in_array('--quiet', $_SERVER['argv'] ?? [])) {
             echo 'Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . ($improved ? ' - Improved' : null) . PHP_EOL;
             flush();
         }

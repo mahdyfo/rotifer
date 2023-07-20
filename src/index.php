@@ -6,7 +6,7 @@ use GeneticAutoml\Models\World;
 
 /**
  * Options
- *      --verbose: Shows more details
+ *      --quiet: Hide details
  */
 
 // Crossover probability, 0.5 mean half genes from mother and half from father
