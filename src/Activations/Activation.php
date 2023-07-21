@@ -14,9 +14,9 @@ class Activation
         return max(0, $value);
     }
 
-    public static function tanh(float $value): float
+    public static function tanh(float $value, float $multiplication = 0.25): float
     {
-        return tanh($value);
+        return tanh($value * $multiplication);
     }
 
     public static function threshold(float $value): float
