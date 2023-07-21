@@ -11,14 +11,18 @@ use GeneticAutoml\Helpers\ReproductionHelper;
 
 class World
 {
+    private string $name;
     /**
      * @var Agent[]
      */
     private array $agents = [];
-
     private int $generation = 1;
-
     private ?Agent $bestAgent = null;
+
+    public function __construct($name = 'default')
+    {
+        $this->name = $name;
+    }
 
     /**
      * @param int $count How many agents to create
@@ -46,13 +50,17 @@ class World
         return $this->setAgents($agents);
     }
 
-    public static function loadAutoSaved(): self
+    public static function loadAutoSaved($name = 'default', bool $hasMemory = false): self
     {
-        $world = file_get_contents('autosave/world.txt');
-        $world = self::createFromGenomesString($world, HexEncoder::getInstance());
+        if (!file_exists('autosave/world_' . $name . '.txt')) {
+            throw new Exception('World file for name: ' . $name . ' does not exist');
+        }
+        $world = file_get_contents('autosave/world_' . $name . '.txt');
+        $world = self::createFromGenomesString($world, HexEncoder::getInstance(), ';', "\n", $hasMemory);
+        $world->name = $name;
 
-        $bestAgent = file_get_contents('autosave/best_agent.txt');
-        $world->bestAgent = Agent::createFromGenome($bestAgent, HexEncoder::getInstance());
+        $bestAgent = file_get_contents('autosave/best_agent_' . $name . '.txt');
+        $world->bestAgent = Agent::createFromGenome($bestAgent, HexEncoder::getInstance())->setHasMemory($hasMemory);
         $world->agents[array_key_last($world->agents)] = $world->bestAgent;
 
         return $world;
@@ -255,16 +263,16 @@ class World
             $improved = true;
 
             // Save best agent in file
-            file_put_contents('autosave/best_agent.txt', $this->bestAgent->getGenomeString(HexEncoder::getInstance()));
+            file_put_contents('autosave/best_agent_' . $this->name . '.txt', $this->bestAgent->getGenomeString(HexEncoder::getInstance()));
         }
 
         // Save world in file
         if ($this->generation % SAVE_WORLD_EVERY_GENERATION == 0) {
-            file_put_contents('autosave/world.txt', $this->getGenomesString(HexEncoder::getInstance()));
+            file_put_contents('autosave/world_' . $this->name . '.txt', $this->getGenomesString(HexEncoder::getInstance()));
         }
 
         if (!in_array('--quiet', $_SERVER['argv'] ?? [])) {
-            echo 'Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . ($improved ? ' - Improved' : null) . PHP_EOL;
+            echo 'Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . ($this->generation != 1 && $improved ? ' - Improved' : null) . PHP_EOL;
             flush();
         }
 
@@ -292,7 +300,7 @@ class World
         return implode($genomeSeparator, $genomes);
     }
 
-    public static function createFromGenomesString($genomes, Encoder $decoder = null, $geneSeparator = ';', $genomeSeparator = "\n"): self
+    public static function createFromGenomesString($genomes, Encoder $decoder = null, $geneSeparator = ';', $genomeSeparator = "\n", bool $hasMemory = false): self
     {
         $world = new self();
 
@@ -304,7 +312,7 @@ class World
 
         $agents = [];
         foreach ($genomes as $genome) {
-            $agents[] = Agent::createFromGenome($genome, $decoder, $geneSeparator);
+            $agents[] = Agent::createFromGenome($genome, $decoder, $geneSeparator)->setHasMemory($hasMemory);
         }
 
         $world->setAgents($agents);
