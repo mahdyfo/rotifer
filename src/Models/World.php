@@ -155,7 +155,7 @@ class World
             $newAgent = ReproductionHelper::crossover($agent1, $agent2, PROBABILITY_CROSSOVER);
 
             // Mutation
-            $newAgent = ReproductionHelper::mutate($newAgent, PROBABILITY_MUTATE_WEIGHT, PROBABILITY_MUTATE_ADD_NEURON, PROBABILITY_MUTATE_REMOVE_NEURON);
+            $newAgent = ReproductionHelper::mutate($newAgent, PROBABILITY_MUTATE_WEIGHT, PROBABILITY_MUTATE_ADD_NEURON, PROBABILITY_MUTATE_ADD_GENE, PROBABILITY_MUTATE_REMOVE_NEURON, PROBABILITY_MUTATE_REMOVE_GENE);
 
             // Make a fresh agent (remove all neuron values and reset step)
             $newAgent = Agent::createFromGenome($newAgent->getGenomeArray());

@@ -61,30 +61,74 @@ class ReproductionHelper
      * @return Agent
      * @throws \Exception
      */
-    public static function mutate(Agent $agent, float $changeGeneProbability = 0.5, float $addNeuronProbability = 0.3, float $deleteNeuronProbability = 0.1): Agent
+    public static function mutate(Agent $agent, float $changeGeneProbability = 0.5, float $addNeuronProbability = 0.3, float $addConnectionProbability = 0.3, float $deleteNeuronProbability = 0.1, float $deleteConnectionProbability = 0.1): Agent
     {
         // 1. Add neuron
         if (mt_rand(1, 10000) / 10000 <= $addNeuronProbability) {
             $agent->createNeuron(Neuron::TYPE_HIDDEN, 1, true);
+
+            $agent->deleteRedundantGenes();
         }
 
-        // 2. Change weight
-        $genome = $agent->getGenomeArray();
-        $changedGenome = false;
-        foreach ($genome as $key => $gene) {
-            // Continue if the probability is not met
-            if (mt_rand(1, 10000) / 10000 > $changeGeneProbability) {
-                continue;
+        // 2. Add connection
+        if (mt_rand(1, 10000) / 10000 <= $addConnectionProbability) {
+            $genome = $agent->getGenomeArray();
+
+            // Current connections
+            $currentConnections = [];
+            foreach ($genome as $gene) {
+                $currentConnections[] = $gene['from_type'] . '.' . $gene['from_index'] . '.' . $gene['to_type'] . '.' . $gene['to_index'];
             }
 
-            $genome[$key]['weight'] = WeightHelper::generateRandomWeight();
-            $changedGenome = true;
+            // All possible connections
+            $possibleConnections = [];
+            $inputs = $agent->getNeuronsByType(Neuron::TYPE_INPUT);
+            $hiddens = $agent->getNeuronsByType(Neuron::TYPE_HIDDEN);
+            $outputs = $agent->getNeuronsByType(Neuron::TYPE_OUTPUT);
+            // Input -> Hidden / Input -> Output
+            foreach ($inputs as $index => $input) {
+                foreach ($hiddens as $hidden) {
+                    $possibleConnections[] = Neuron::TYPE_INPUT . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden->getIndex();
+                }
+                foreach ($outputs as $output) {
+                    $possibleConnections[] = Neuron::TYPE_INPUT . '.' . $index . '.' . Neuron::TYPE_OUTPUT . '.' . $output->getIndex();
+                }
+            }
+            // Hidden -> Hidden / Hidden -> Output
+            foreach ($hiddens as $index => $hidden) {
+                foreach ($hiddens as $hidden2) {
+                    // No memory? Then don't include self-connections and future feedbacks
+                    if (!$agent->hasMemory() && $hidden2->getIndex() >= $hidden->getIndex()) {
+                        continue;
+                    }
+                    $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden2->getIndex();
+                }
+                foreach ($outputs as $output) {
+                    $possibleConnections[] = Neuron::TYPE_INPUT . '.' . $index . '.' . Neuron::TYPE_OUTPUT . '.' . $output->getIndex();
+                }
+            }
+
+            // Create a new connection
+            $diffConnections = array_diff($possibleConnections, $currentConnections);
+            if ($diffConnections) {
+                shuffle($diffConnections);
+                $diffConnection = explode('.', $diffConnections[array_rand($diffConnections)]);
+                $agent->connectNeurons(
+                    $agent->findNeuron($diffConnection[0], $diffConnection[1]),
+                    $agent->findNeuron($diffConnection[2], $diffConnection[3]),
+                    WeightHelper::generateRandomWeight()
+                );
+            }
         }
-        if ($changedGenome) {
+
+        // 3. Change weight
+        if (mt_rand(1, 10000) / 10000 <= $changeGeneProbability) {
+            $genome = $agent->getGenomeArray();
+            $genome[array_rand($genome)]['weight'] = WeightHelper::generateRandomWeight();
             $agent->setGenome($genome);
         }
 
-        // 3. Delete neuron
+        // 4. Delete neuron
         if (mt_rand(1, 10000) / 10000 <= $deleteNeuronProbability) {
             $hiddens = $agent->getNeuronsByType(Neuron::TYPE_HIDDEN);
 
@@ -94,14 +138,14 @@ class ReproductionHelper
                 $inputs = $agent->getNeuronsByType(Neuron::TYPE_INPUT);
                 $outputs = $agent->getNeuronsByType(Neuron::TYPE_OUTPUT);
 
-                // Find neurons of 1 connection inputs
+                // Find neurons with 1 connection from inputs
                 foreach ($inputs as $input) {
                     $connections = $input->getOutConnections();
                     if (!empty($connections[Neuron::TYPE_HIDDEN]) && count($connections[Neuron::TYPE_HIDDEN]) == 1) {
                         $excludeHiddenIndexes[] = array_keys($connections[Neuron::TYPE_HIDDEN])[0];
                     }
                 }
-                // Find neurons of 1 connection outputs
+                // Find neurons with 1 connection to outputs
                 foreach ($outputs as $output) {
                     $connections = $output->getInConnections();
                     if (!empty($connections[Neuron::TYPE_HIDDEN]) && count($connections[Neuron::TYPE_HIDDEN]) == 1) {
@@ -119,9 +163,17 @@ class ReproductionHelper
                     $agent->removeNeuron(Neuron::TYPE_HIDDEN, $randomHiddenIndex);
                 }
             }
+
+            $agent->deleteRedundantGenes();
         }
 
-        $agent->deleteRedundantGenes();
+        // 5. Delete connection
+        if (mt_rand(1, 10000) / 10000 <= $deleteConnectionProbability) {
+            $genome = $agent->getGenomeArray();
+            unset($genome[array_rand($genome)]);
+            $agent->setGenome($genome);
+        }
+
 
         return $agent;
     }
