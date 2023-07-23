@@ -19,6 +19,11 @@ class Neuron
      * @var array [INPUT => [400 => 2.356, 320 => 1.55], NEURON => [506 => 0.056, 601 => 1.2]]
      */
     private array $inConnections = [];
+
+    /**
+     * The connections out from this neuron
+     * @var array [INPUT => [400 => 2.356, 320 => 1.55], NEURON => [506 => 0.056, 601 => 1.2]]
+     */
     private array $outConnections = [];
 
     public function setType(int $type): self
@@ -87,6 +92,31 @@ class Neuron
         $this->outConnections[$type][$index] = $weight;
 
         return $this;
+    }
+
+    public function deleteInConnection($type, $index): bool
+    {
+        unset($this->inConnections[$type][$index]);
+        return true;
+    }
+
+    public function deleteOutConnection($type, $index): bool
+    {
+        unset($this->outConnections[$type][$index]);
+        return true;
+    }
+
+    /**
+     * Deletes both in-connection and out-connection
+     * @param $type
+     * @param $index
+     * @return bool
+     */
+    public function deleteConnection($type, $index): bool
+    {
+        unset($this->inConnections[$type][$index]);
+        unset($this->outConnections[$type][$index]);
+        return true;
     }
 
     public function deleteConnections(): bool
