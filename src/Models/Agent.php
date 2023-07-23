@@ -128,7 +128,8 @@ class Agent
 
     /**
      * Connects the input neuron to all other neurons and inputs and outputs with random weight
-     * It will be connected to other hidden neurons by 50% chance of in or out connection
+     * Other neurons will be connected to the new hidden one. Because we calculate neurons from index 0 and
+     * connecting new neuron to other hidden ones makes no sense. But connecting other ones to new one makes sense.
      * @param Neuron $inputNeuron
      * @return $this
      * @throws Exception
@@ -145,11 +146,12 @@ class Agent
                         $this->connectNeurons($inputNeuron, $neuron, WeightHelper::generateRandomWeight());
                         break;
                     case Neuron::TYPE_HIDDEN:
-                        if (mt_rand(1, 2) == 1) {
-                            $this->connectNeurons($inputNeuron, $neuron, WeightHelper::generateRandomWeight());
-                        } else {
-                            $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
+                        // Do not connect to itself if agent has no memory
+                        if (!$this->hasMemory() && $neuron->getIndex() == $inputNeuron->getIndex()) {
+                            break;
                         }
+                        // Connect other neurons to the new neuron
+                        $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
                         break;
                 }
             }
@@ -216,7 +218,7 @@ class Agent
     /**
      * @param Encoder|null $encoder Default is array genome
      * @param mixed $iterationCallback The function to execute on each element
-     * @return array
+     * @return array [gene, gene]
      */
     public function getGenomeArray(Encoder $encoder = null, $iterationCallback = null): array
     {
@@ -284,6 +286,21 @@ class Agent
         // No need to remove duplicates. They are automatically replaced because of having same array keys
         $neuronsByIndex = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
         foreach ($neuronsByIndex as $index => $neuron) {
+            // If no memory, delete self-connections and all future in-connections (neuron to neuron) starting from beginning. Because they don't have any effect.
+            if (!$this->hasMemory()) {
+                $inConnections = $neuron->getInConnections()[Neuron::TYPE_HIDDEN] ?? [];
+                foreach ($inConnections as $otherIndex => $inConnection) {
+                    // Remove self-connection
+                    if ($index == $otherIndex) {
+                        $this->neurons[Neuron::TYPE_HIDDEN][$index]->deleteConnection(Neuron::TYPE_HIDDEN, $index);
+                    }
+                    // Remove in-connection from future neurons
+                    if ($otherIndex > $index) {
+                        $this->neurons[Neuron::TYPE_HIDDEN][$index]->deleteInConnection(Neuron::TYPE_HIDDEN, $otherIndex);
+                    }
+                }
+            }
+
             // Delete neurons with 1 only out-connection just to themselves
             if (
                 count($neuron->getOutConnections()) == 1 &&
@@ -355,6 +372,15 @@ class Agent
         foreach ($neuronGroups as $neuronGroup) {
             // Foreach all hidden neurons
             foreach ($neuronGroup as $neuron) {
+                if ($this->hasMemory() && $neuron->getType() == Neuron::TYPE_HIDDEN) {
+                    // If the agent has memory, use dropout technique (20%) to avoid over-fitting or learning the train-set
+                    if (mt_rand(1, 100) <= 20) {
+                        // Delete the neuron memory
+                        $neuron->setValue(0);
+                        // Don't calculate
+                        continue;
+                    }
+                }
                 $newValue = 0;
                 // Foreach inward connections [INPUT => [435 => 2.6, 266 => 1.4], NEURON => [...]]
                 foreach ($neuron->getInConnections() as $type => $neuronsByIndex) {
