@@ -104,7 +104,7 @@ class ReproductionHelper
                     $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden2->getIndex();
                 }
                 foreach ($outputs as $output) {
-                    $possibleConnections[] = Neuron::TYPE_INPUT . '.' . $index . '.' . Neuron::TYPE_OUTPUT . '.' . $output->getIndex();
+                    $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_OUTPUT . '.' . $output->getIndex();
                 }
             }
 
