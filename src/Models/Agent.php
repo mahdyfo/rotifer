@@ -136,23 +136,37 @@ class Agent
      */
     public function connectToAll(Neuron $inputNeuron): self
     {
-        foreach ($this->neurons as $type => $neurons) {
+	$targetType = $inputNeuron->getType();
+
+        foreach ($this->neurons as $sourceType => $neurons) {
             foreach ($neurons as $index => $neuron) {
-                switch ($type) {
-                    case Neuron::TYPE_INPUT:
-                        $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
-                        break;
-                    case Neuron::TYPE_OUTPUT:
+	            // Inputs -> target hidden or target output
+                if ($sourceType == Neuron::TYPE_INPUT && ($targetType == Neuron::TYPE_HIDDEN || $targetType == Neuron::TYPE_OUTPUT)) {
+                    $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
+                }
+                // Target input or Target hidden -> Outputs
+                if ($sourceType == Neuron::TYPE_OUTPUT && ($targetType == Neuron::TYPE_INPUT || $targetType == Neuron::TYPE_HIDDEN)) {
+                    $this->connectNeurons($inputNeuron, $neuron, WeightHelper::generateRandomWeight());
+                }
+		        // Hiddens -> target hidden | Inputs -> target hidden | Target input -> hiddens
+                if ($sourceType == Neuron::TYPE_HIDDEN) {
+                    // Do not connect to itself if agent has no memory
+                    if (!$this->hasMemory() && $neuron->getIndex() == $inputNeuron->getIndex()) {
+                        continue;
+                    }
+                    // Connect other neurons to the new neuron
+                    // Target input -> hiddens
+                    if ($targetType == Neuron::TYPE_INPUT) {
                         $this->connectNeurons($inputNeuron, $neuron, WeightHelper::generateRandomWeight());
-                        break;
-                    case Neuron::TYPE_HIDDEN:
-                        // Do not connect to itself if agent has no memory
-                        if (!$this->hasMemory() && $neuron->getIndex() == $inputNeuron->getIndex()) {
-                            break;
-                        }
-                        // Connect other neurons to the new neuron
+                    }
+                    // Inputs or Hiddens -> Target output
+                    if ($targetType == Neuron::TYPE_OUTPUT) {
                         $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
-                        break;
+                    }
+                    // Hiddens -> Target hidden
+                    if ($targetType == Neuron::TYPE_HIDDEN) {
+                        $this->connectNeurons($neuron, $inputNeuron, WeightHelper::generateRandomWeight());
+                    }
                 }
             }
         }
