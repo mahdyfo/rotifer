@@ -66,7 +66,6 @@ class ReproductionHelper
         // 1. Add neuron
         if (mt_rand(1, 10000) / 10000 <= $addNeuronProbability) {
             $agent->createNeuron(Neuron::TYPE_HIDDEN, 1, true);
-
             $agent->deleteRedundantGenes();
         }
 
@@ -172,8 +171,21 @@ class ReproductionHelper
             $genome = $agent->getGenomeArray();
             unset($genome[array_rand($genome)]);
             $agent->setGenome($genome);
-        }
 
+            // No inputs or outputs should be without connection
+            $inputs = $agent->getNeuronsByType(Neuron::TYPE_INPUT);
+            $outputs = $agent->getNeuronsByType(Neuron::TYPE_OUTPUT);
+            foreach($inputs as $input) {
+               if (count($input->getOutConnections()) == 0) {
+                   $agent->connectToAll($input);
+               }
+            }
+            foreach($outputs as $output) {
+               if (count($output->getInConnections()) == 0) {
+                   $agent->connectToAll($output);
+               }
+            }
+        }
 
         return $agent;
     }
