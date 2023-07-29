@@ -272,7 +272,11 @@ class World
         }
 
         if (!in_array('--quiet', $_SERVER['argv'] ?? [])) {
-            echo 'Generation ' . $this->generation . ' - Best generation fitness: ' . $highestFitness . ' - Best overall fitness: ' . ($this->bestAgent?->getFitness() ?? 0) . ($this->generation != 1 && $improved ? ' - Improved' : null) . PHP_EOL;
+            echo 'Generation ' . $this->generation . ' - Best in generation: ' . $highestFitness
+                . ' - Best overall: ' . ($this->bestAgent?->getFitness() ?? 0)
+                . ' - Genes: ' . count($this->bestAgent->getGenomeArray())
+                . ' - H.Neurons: ' . count($this->bestAgent->getNeuronsByType(Neuron::TYPE_HIDDEN))
+                . ($this->generation != 1 && $improved ? ' - Improved' : null) . PHP_EOL;
             flush();
         }
 
