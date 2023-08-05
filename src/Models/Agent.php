@@ -15,6 +15,7 @@ class Agent
     private array $neurons = [];
     private float $fitness = 0;
     private int $step = 0;
+    private float $stepTime = 0;
     private bool $hasMemory = false;
     private array $additional = [];
 
@@ -363,6 +364,10 @@ class Agent
      */
     public function step(array $inputs): Agent
     {
+        if (CALCULATE_STEP_TIME) {
+            $time1 = microtime(true);
+        }
+
         /** @var Neuron $neuron */
         // Set inputs
         $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
@@ -409,6 +414,10 @@ class Agent
 
         $this->step++;
 
+        if (CALCULATE_STEP_TIME) {
+            $this->stepTime = microtime(true) - $time1;
+        }
+
         return $this;
     }
 
@@ -445,6 +454,15 @@ class Agent
     public function getStep(): int
     {
         return $this->step;
+    }
+
+    /**
+     * The time it took from start to finish of the step (microtime)
+     * @return float
+     */
+    public function getStepTime(): float
+    {
+        return $this->stepTime;
     }
 
     /**
