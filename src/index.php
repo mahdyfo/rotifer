@@ -18,6 +18,8 @@ const PROBABILITY_MUTATE_REMOVE_NEURON = 0.05;
 const PROBABILITY_MUTATE_REMOVE_GENE = 0.1;
 const ACTIVATION = [Activation::class, 'sigmoid'];
 const SAVE_WORLD_EVERY_GENERATION = 50; // Every x generations, saves world and best agent
+const CALCULATE_STEP_TIME = true;
+const ONLY_CALCULATE_FIRST_STEP_TIME = true;
 
 $population = 200;
 $data = [

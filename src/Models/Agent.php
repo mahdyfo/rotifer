@@ -365,7 +365,9 @@ class Agent
     public function step(array $inputs): Agent
     {
         if (CALCULATE_STEP_TIME) {
-            $time1 = microtime(true);
+			if ($this->stepTime == 0 || ($this->stepTime > 0 && !ONLY_CALCULATE_FIRST_STEP_TIME)) {
+				$time1 = microtime(true);
+			}
         }
 
         /** @var Neuron $neuron */
@@ -415,7 +417,9 @@ class Agent
         $this->step++;
 
         if (CALCULATE_STEP_TIME) {
-            $this->stepTime = microtime(true) - $time1;
+			if ($this->stepTime == 0 || ($this->stepTime > 0 && !ONLY_CALCULATE_FIRST_STEP_TIME)) {
+				$this->stepTime = microtime(true) - $time1;
+			}
         }
 
         return $this;
