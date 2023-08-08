@@ -28,23 +28,40 @@ class World
      * @param int $count How many agents to create
      * @param $inputNeuronsCount
      * @param $outputNeuronsCount
+     * @param array $hiddenLayersNeurons For having static agents, for example 3 layers with 4, 5, 4 each: [4, 5, 4]
      * @param bool $hasMemory Do they have memory or they should be trained for each training row without any previous knowledge
      * @return World
      * @throws Exception
      */
-    public function createAgents(int $count, $inputNeuronsCount, $outputNeuronsCount, bool $hasMemory = false): self
+    public function createAgents(int $count, $inputNeuronsCount, $outputNeuronsCount, array $hiddenLayersNeurons = [], bool $hasMemory = false): self
     {
         if ($count <= 1) {
             throw new Exception('The world cannot have only 1 agent.');
         }
+        if ($hasMemory && $hiddenLayersNeurons) {
+            throw new Exception('Static agents cannot have memory.');
+        }
+
         $agents = [];
 
-        for ($i = 0; $i < $count; $i++) {
-            $agents[] = (new Agent())
-                ->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount)
-                ->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount)
-                ->setHasMemory($hasMemory)
-                ->initRandomConnections();
+        if ($hiddenLayersNeurons) {
+            // Static agents
+            for ($i = 0; $i < $count; $i++) {
+                $agents[] = (new StaticAgent())
+                    ->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount, false)
+                    ->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount, false)
+                    ->createHiddenLayerNeurons($hiddenLayersNeurons)
+                    ->initRandomConnections();
+            }
+        } else {
+            // Dynamic agents
+            for ($i = 0; $i < $count; $i++) {
+                $agents[] = (new Agent())
+                    ->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount)
+                    ->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount)
+                    ->setHasMemory($hasMemory)
+                    ->initRandomConnections();
+            }
         }
 
         return $this->setAgents($agents);
