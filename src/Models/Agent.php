@@ -353,6 +353,7 @@ class Agent
         foreach ($this->getNeuronsByType(Neuron::TYPE_HIDDEN) as $neuron) {
             $neuron->setValue(0);
         }
+        $this->setFitness(0);
 
         return $this;
     }
