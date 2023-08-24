@@ -12,6 +12,7 @@ use GeneticAutoml\Models\World;
 // Crossover probability, 0.5 mean half genes from mother and half from father
 const PROBABILITY_CROSSOVER = 0.5;
 const PROBABILITY_MUTATE_WEIGHT = 0.1;
+const MUTATE_WEIGHT_COUNT = 1; // number of weight mutations in every agent
 const PROBABILITY_MUTATE_ADD_NEURON = 0.05;
 const PROBABILITY_MUTATE_ADD_GENE = 0.1;
 const PROBABILITY_MUTATE_REMOVE_NEURON = 0.05;
@@ -40,7 +41,7 @@ $fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $othe
 
 // World
 $world = new World();
-$world->createAgents($population, 3, 1, true);
+$world->createAgents($population, 3, 1, [], true);
 $world->step($fitnessFunction, $data, 100, 0.8);
 
 // Report

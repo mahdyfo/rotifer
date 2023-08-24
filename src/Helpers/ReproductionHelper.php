@@ -4,6 +4,7 @@ namespace GeneticAutoml\Helpers;
 
 use GeneticAutoml\Models\Agent;
 use GeneticAutoml\Models\Neuron;
+use GeneticAutoml\Models\StaticAgent;
 
 class ReproductionHelper
 {
@@ -63,6 +64,12 @@ class ReproductionHelper
      */
     public static function mutate(Agent $agent, float $changeGeneProbability = 0.5, float $addNeuronProbability = 0.3, float $addConnectionProbability = 0.3, float $deleteNeuronProbability = 0.1, float $deleteConnectionProbability = 0.1): Agent
     {
+        if ($agent instanceof StaticAgent) {
+            $addNeuronProbability = 0;
+            $addConnectionProbability = 0;
+            $deleteNeuronProbability = 0;
+            $deleteConnectionProbability = 0;
+        }
         // 1. Add neuron
         if (mt_rand(1, 10000) / 10000 <= $addNeuronProbability) {
             $agent->createNeuron(Neuron::TYPE_HIDDEN, 1, true);
@@ -123,7 +130,9 @@ class ReproductionHelper
         // 3. Change weight
         if (mt_rand(1, 10000) / 10000 <= $changeGeneProbability) {
             $genome = $agent->getGenomeArray();
-            $genome[array_rand($genome)]['weight'] = WeightHelper::generateRandomWeight();
+            for ($i = 0; $i < MUTATE_WEIGHT_COUNT ?? 1; $i++) {
+                $genome[array_rand($genome)]['weight'] = WeightHelper::generateRandomWeight();
+            }
             $agent->setGenome($genome);
         }
 
