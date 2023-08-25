@@ -82,7 +82,7 @@ class Agent
      */
     public static function createFromGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): self
     {
-        return (new self())->setGenome($genome, $decoder, $separator);
+        return (new static())->setGenome($genome, $decoder, $separator);
     }
 
     /**
@@ -213,10 +213,12 @@ class Agent
         return $this;
     }
 
-    public function getNeuronsByType(int $type): array
+    public function getNeuronsByType(int $type, bool $sort = true): array
     {
         if (isset($this->neurons[$type])) {
-            ksort($this->neurons[$type]);
+            if ($sort) {
+                ksort($this->neurons[$type]);
+            }
             return $this->neurons[$type];
         }
 

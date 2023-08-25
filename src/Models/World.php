@@ -175,7 +175,13 @@ class World
             $newAgent = ReproductionHelper::mutate($newAgent, PROBABILITY_MUTATE_WEIGHT, PROBABILITY_MUTATE_ADD_NEURON, PROBABILITY_MUTATE_ADD_GENE, PROBABILITY_MUTATE_REMOVE_NEURON, PROBABILITY_MUTATE_REMOVE_GENE);
 
             // Make a fresh agent (remove all neuron values and reset step)
-            $newAgent = Agent::createFromGenome($newAgent->getGenomeArray());
+            if ($agent1 instanceof StaticAgent) {
+                /** @var StaticAgent $newAgent */
+                $newAgent = StaticAgent::createFromGenome($newAgent->getGenomeArray());
+                $newAgent->setLayers($agent1->getLayers());
+            } else {
+                $newAgent = Agent::createFromGenome($newAgent->getGenomeArray());
+            }
 
             $attempts++;
             if ($attempts > 100) {

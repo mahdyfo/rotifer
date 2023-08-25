@@ -74,8 +74,34 @@ class StaticAgent extends Agent
         return $this->createNeuron(Neuron::TYPE_HIDDEN, $count, false);
     }
 
+    public function setLayers(array $layers)
+    {
+        $this->layers = $layers;
+    }
+
     public function getLayers(): array
     {
         return $this->layers;
+    }
+
+    /**
+     * @param int $layerIndex Which hidden layer should it return the neurons from. (starts from 0)
+     * @return array
+     */
+    public function getNeuronsByLayer(int $layerIndex): array
+    {
+        if (isset($this->layers[$layerIndex])) {
+            $hiddenNeurons = $this->getNeuronsByType(Neuron::TYPE_HIDDEN, false);
+            // Calculate start and end index of layer neurons
+            $startIndex = 0;
+            // Example layers: [4, 5, 3], i = 1 (second layer)
+            for ($i = 0; $i < $layerIndex; $i++) {
+                // start index = 4 for second layer
+                $startIndex += $this->layers[$i];
+            }
+            return array_slice($hiddenNeurons, $startIndex, $this->layers[$layerIndex], true);
+        }
+
+        return [];
     }
 }

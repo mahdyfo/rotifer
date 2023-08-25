@@ -2,6 +2,7 @@
 
 require '../vendor/autoload.php';
 use GeneticAutoml\Activations\Activation;
+use GeneticAutoml\Models\StaticAgent;
 use GeneticAutoml\Models\World;
 /**
  * Options
@@ -30,7 +31,7 @@ $data = [
 $layers = [6, 2, 6];
 
 // Fitness
-$fitnessFunction = function (\GeneticAutoml\Models\Agent $agent, $dataRow, $otherAgents, $world) {
+$fitnessFunction = function (StaticAgent $agent, $dataRow, $otherAgents, $world) {
     $predictedOutputs = $agent->getOutputValues();
     $actualOutputs = $dataRow[1];
 
@@ -52,6 +53,7 @@ $world->step($fitnessFunction, $data, $generations, 0.8);
 print_r(\GeneticAutoml\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
 
 // Test
+/** @var \GeneticAutoml\Models\StaticAgent $agent */
 $agent = $world->getBestAgent();
 $agent->resetValues();
 $total = count($data);
