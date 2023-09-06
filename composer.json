@@ -1,6 +1,7 @@
 {
-    "name": "mahdyfo/genetic-automl",
+    "name": "mahdyfo/rotifer",
     "description": "Genetic AI that creates it deep learning network structure",
+    "license": "GPL-3.0-or-later",
     "autoload": {
         "psr-4": {
             "GeneticAutoml\\": "src/"
@@ -12,5 +13,7 @@
             "email": "mahdyfof@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "php": ">=8.0"
+    }
 }
