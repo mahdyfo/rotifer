@@ -55,7 +55,7 @@ class Agent
         return $this->neurons[$type][$index] = (new Neuron())->setType($type)->setIndex($index);
     }
 
-    public function createNeuron(int $type, int $count = 1, bool $connectToAll = false): self
+    public function createNeuron(int $type, int $count = 1, bool $connectToAll = false): static
     {
         for ($i = 0; $i < $count; $i++) {
             if (empty($this->neurons[$type])) {
@@ -80,7 +80,7 @@ class Agent
      * @return Agent
      * @throws Exception
      */
-    public static function createFromGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): self
+    public static function createFromGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): static
     {
         return (new static())->setGenome($genome, $decoder, $separator);
     }
@@ -90,7 +90,7 @@ class Agent
      * @return Agent
      * @throws Exception
      */
-    public function initRandomConnections(): self
+    public function initRandomConnections(): static
     {
         /** @var Neuron $inputNeuron */
         /** @var Neuron $outputNeuron */
@@ -103,7 +103,7 @@ class Agent
         return $this;
     }
 
-    public function connectNeurons(Neuron $neuron1, Neuron $neuron2, $weight): self
+    public function connectNeurons(Neuron $neuron1, Neuron $neuron2, $weight): static
     {
         if ($weight > WeightHelper::MAX_WEIGHT || $weight < -WeightHelper::MAX_WEIGHT) {
             throw new Exception('Weight of connection from ' . $neuron1->getType() . ':' . $neuron1->getIndex()
@@ -135,7 +135,7 @@ class Agent
      * @return $this
      * @throws Exception
      */
-    public function connectToAll(Neuron $inputNeuron): self
+    public function connectToAll(Neuron $inputNeuron): static
     {
 	$targetType = $inputNeuron->getType();
 
@@ -182,7 +182,7 @@ class Agent
      * @return Agent
      * @throws Exception
      */
-    public function setGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): self
+    public function setGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): static
     {
         // Separate genes if genome is provided as string
         if (!is_array($genome)) {
@@ -213,6 +213,11 @@ class Agent
         return $this;
     }
 
+    /**
+     * @param int $type
+     * @param bool $sort
+     * @return Neuron[]
+     */
     public function getNeuronsByType(int $type, bool $sort = true): array
     {
         if (isset($this->neurons[$type])) {
@@ -225,7 +230,7 @@ class Agent
         return [];
     }
 
-    public function removeNeuron(int $type, int $index): self
+    public function removeNeuron(int $type, int $index): static
     {
         unset($this->neurons[$type][$index]);
 
@@ -350,7 +355,7 @@ class Agent
         }
     }
 
-    public function resetValues(): self
+    public function resetValues(): static
     {
         foreach ($this->getNeuronsByType(Neuron::TYPE_HIDDEN) as $neuron) {
             $neuron->setValue(0);
@@ -481,14 +486,14 @@ class Agent
         return $this->fitness;
     }
 
-    public function setFitness(float $fitness): self
+    public function setFitness(float $fitness): static
     {
         $this->fitness = $fitness;
 
         return $this;
     }
 
-    public function setHasMemory(bool $hasMemory = false): self
+    public function setHasMemory(bool $hasMemory = false): static
     {
         $this->hasMemory = $hasMemory;
 
@@ -513,7 +518,7 @@ class Agent
      * Set additional custom user data
      * @param array $additional
      */
-    public function setAdditional(array $additional): self
+    public function setAdditional(array $additional): static
     {
         $this->additional = $additional;
 

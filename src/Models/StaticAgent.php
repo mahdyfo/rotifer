@@ -19,7 +19,7 @@ class StaticAgent extends Agent
      * @return StaticAgent
      * @throws Exception
      */
-    public function initRandomConnections(): self
+    public function initRandomConnections(): static
     {
         $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
         $hiddenNeurons = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
@@ -64,7 +64,7 @@ class StaticAgent extends Agent
      * @param array $layers For example 3 layers with 5, 4, 5 neurons in each: [5, 4, 5]
      * @return $this
      */
-    public function createHiddenLayerNeurons(array $layers = []): self
+    public function createHiddenLayerNeurons(array $layers = []): static
     {
         $this->layers = $layers;
 
@@ -86,7 +86,7 @@ class StaticAgent extends Agent
 
     /**
      * @param int $layerIndex Which hidden layer should it return the neurons from. (starts from 0)
-     * @return array
+     * @return Neuron[]
      */
     public function getNeuronsByLayer(int $layerIndex): array
     {
