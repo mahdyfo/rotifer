@@ -1,11 +1,18 @@
-# php-genetic-ai-automl
-Evolutionary Genetic AI that designs itself (AutoML)
+# Rotifer
+## Genetic Machine Learning Framework
+#### Autonomous evolution: From simplest to complex
 
+This is an evolutionary genetic AI framework that designs itself (AutoML).
 I believe the most powerful AI is the one which creates itself. A complex structure that human cannot understand, like our brains. 
 
 Run:
 ```
 php src/index.php
+```
+
+Xor example:
+```
+php src/xor.php
 ```
 
 ## Main Parts
@@ -34,14 +41,9 @@ $data = [
 ];
 
 Generation 1 - Best generation fitness: 5.3965296271639 - Best overall fitness: 5.3965296271639
-...
 Generation 50 - Best generation fitness: 5.9992278738651 - Best overall fitness: 5.9992278738651
-...
 Generation 100 - Best generation fitness: 6.0455893609229 - Best overall fitness: 6.7389574321586
-...
 Generation 150 - Best generation fitness: 7.4842880310069 - Best overall fitness: 7.6137585607025
-...
-Generation 199 - Best generation fitness: 7.5486734099125 - Best overall fitness: 7.9401862706856
 Generation 200 - Best generation fitness: 7.5486734099125 - Best overall fitness: 7.9401862706856
 
 Report:
@@ -55,7 +57,7 @@ Test:
     Rounded Output: 0 - Raw output: 0.0019566823546141
     Rounded Output: 1 - Raw output: 0.99504714984784
     Rounded Output: 1 - Raw output: 0.99970922413458
-    Rounded Output: 0 - Raw output: 6.5887410171281E-5
+    Rounded Output: 0 - Raw output: 0.00004324516515
     Rounded Output: 0 - Raw output: 0.0042442188361674
     Rounded Output: 1 - Raw output: 0.95487230539894
 ```
