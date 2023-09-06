@@ -2,6 +2,7 @@
     "name": "mahdyfo/rotifer",
     "description": "Genetic AI that creates it deep learning network structure",
     "license": "GPL-3.0-or-later",
+    "keywords": ["AI","machine learning", "deep learning", "evolution genetic ai"],
     "autoload": {
         "psr-4": {
             "GeneticAutoml\\": "src/"
@@ -9,7 +10,7 @@
     },
     "authors": [
         {
-            "name": "mahdyfo",
+            "name": "Mahdi Forghani Fard",
             "email": "mahdyfof@gmail.com"
         }
     ],
