@@ -14,6 +14,11 @@ class Activation
         return max(0, $value);
     }
 
+    public static function leakyRelu(float $value): float
+    {
+        return max(0.01 * $value, $value);
+    }
+
     public static function tanh(float $value, float $multiplication = 0.25): float
     {
         return tanh($value * $multiplication);
