@@ -46,10 +46,7 @@ $world = new World();
 $world->createAgents($population, count($data[0][0]), 1, $layers, false);
 $world->step($fitnessFunction, $data, $generations, 0.8);
 
-// Report
-var_dump(\GeneticAutoml\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
-
-// Test
+// Test/Predict
 /** @var \GeneticAutoml\Models\StaticAgent $agent */
 $agent = $world->getBestAgent();
 $agent->resetValues();
