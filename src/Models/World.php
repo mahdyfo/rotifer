@@ -22,6 +22,10 @@ class World
     public function __construct($name = 'default')
     {
         $this->name = $name;
+
+        if (!file_exists('autosave')) {
+            mkdir('autosave');
+        }
     }
 
     /**
@@ -290,7 +294,7 @@ class World
         }
 
         // Save world in file
-        if ($this->generation % SAVE_WORLD_EVERY_GENERATION == 0) {
+        if (SAVE_WORLD_EVERY_GENERATION !== 0 && $this->generation % SAVE_WORLD_EVERY_GENERATION == 0) {
             file_put_contents('autosave/world_' . $this->name . '.txt', $this->getGenomesString(HexEncoder::getInstance()));
         }
 
