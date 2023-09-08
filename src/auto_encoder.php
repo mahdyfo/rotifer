@@ -18,16 +18,19 @@ const PROBABILITY_MUTATE_ADD_GENE = 0;
 const PROBABILITY_MUTATE_REMOVE_NEURON = 0;
 const PROBABILITY_MUTATE_REMOVE_GENE = 0;
 const ACTIVATION = [Activation::class, 'sigmoid'];
-const SAVE_WORLD_EVERY_GENERATION = 10; // Every x generations, saves world and best agent
+const SAVE_WORLD_EVERY_GENERATION = 0; // 0 means don't save the world
 const CALCULATE_STEP_TIME = false;
 const ONLY_CALCULATE_FIRST_STEP_TIME = false;
 
-$generations = 100;
-$population = 100;
+$generations = 300;
+$population = 50;
 $data = [
-    [[0.1, 0.2, 0.3, 0.4, 1, 0, 0.1, 0.2, 0.3, 0.4], [0.1, 0.2, 0.3, 0.4, 1, 0, 0.1, 0.2, 0.3, 0.4]],
-    [[0.2, 0.3, 0.4, 0.5, 1, 0, 0.2, 0.3, 0.4, 0.5], [0.2, 0.3, 0.4, 0.5, 1, 0, 0.2, 0.3, 0.4, 0.5]]
+    [[1, 0.1, 0.2, 0.3, 0.4, 1, 0, 0.1, 0.2, 0.3, 0.4], [1, 0.1, 0.2, 0.3, 0.4, 1, 0, 0.1, 0.2, 0.3, 0.4]],
+    [[1, 0.2, 0.3, 0.4, 0.5, 1, 0, 0.2, 0.3, 0.4, 0.5], [1, 0.2, 0.3, 0.4, 0.5, 1, 0, 0.2, 0.3, 0.4, 0.5]]
+    //^ bias                                             ^ bias
 ];
+
+// Auto encode 10 inputs (+ 1 bias) to 2 neurons with 3 layers
 $layers = [6, 2, 6];
 
 // Fitness
@@ -46,13 +49,13 @@ $fitnessFunction = function (StaticAgent $agent, $dataRow, $otherAgents, $world)
 print_r('Max possible score: ' . count($data[0][0]) * count($data) . PHP_EOL);
 $world = new World('autoencoder_example');
 $world = $world->createAgents($population, count($data[0][0]), count($data[0][0]), $layers);
-//$world = World::loadAutoSaved($symbol . '_autoencoder');
+//$world = World::loadAutoSaved('autoencoder_example');
 $world->step($fitnessFunction, $data, $generations, 0.8);
 
 // Report
 print_r(\GeneticAutoml\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
 
-// Test
+// Test/Predict
 /** @var \GeneticAutoml\Models\StaticAgent $agent */
 $agent = $world->getBestAgent();
 $agent->resetValues();
@@ -72,4 +75,4 @@ foreach ($data as $row) {
 }
 
 $totalRecords = count($data) * count($data[0][0]);
-print_r('Accuracy: ' . round($correctness / $totalRecords, 2) * 100 . '%') . PHP_EOL;
+echo PHP_EOL . 'Accuracy: ' . round($correctness / $totalRecords, 2) * 100 . '%' . PHP_EOL;
