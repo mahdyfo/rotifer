@@ -1,6 +1,6 @@
 <?php
 
-require '../vendor/autoload.php';
+require 'vendor/autoload.php';
 use GeneticAutoml\Activations\Activation;
 use GeneticAutoml\Models\StaticAgent;
 use GeneticAutoml\Models\World;
@@ -18,7 +18,7 @@ const PROBABILITY_MUTATE_ADD_GENE = 0;
 const PROBABILITY_MUTATE_REMOVE_NEURON = 0;
 const PROBABILITY_MUTATE_REMOVE_GENE = 0;
 const ACTIVATION = [Activation::class, 'sigmoid'];
-const SAVE_WORLD_EVERY_GENERATION = 0; // 0 means don't save the world
+const SAVE_WORLD_EVERY_GENERATION = 5; // 0 means don't save the world
 const CALCULATE_STEP_TIME = false;
 const ONLY_CALCULATE_FIRST_STEP_TIME = false;
 
