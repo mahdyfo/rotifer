@@ -21,7 +21,7 @@ const SAVE_WORLD_EVERY_GENERATION = 0; // 0: don't save
 const CALCULATE_STEP_TIME = false;
 const ONLY_CALCULATE_FIRST_STEP_TIME = false;
 
-$population = 50;
+$population = 100;
 $generations = 30;
 $layers = [3, 2];
 
