@@ -9,8 +9,7 @@ use GeneticAutoml\Models\World;
  *      --quiet: Hide details
  */
 
-// Crossover probability, 0.5 mean half genes from mother and half from father
-const PROBABILITY_CROSSOVER = 0.5;
+const PROBABILITY_CROSSOVER = 0.5; // Crossover probability, 0.5 mean half genes from mother and half from father
 const PROBABILITY_MUTATE_WEIGHT = 0.4; // Percentage of agents to get mutated
 const MUTATE_WEIGHT_COUNT = 2; // number of weight mutations in every agent
 const PROBABILITY_MUTATE_ADD_NEURON = 0;
