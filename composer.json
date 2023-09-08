@@ -5,7 +5,7 @@
     "keywords": ["AI","machine learning", "deep learning", "evolution genetic ai"],
     "autoload": {
         "psr-4": {
-            "GeneticAutoml\\": "src/"
+            "Rotifer\\": "src/"
         }
     },
     "authors": [
