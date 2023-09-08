@@ -1,6 +1,6 @@
 <?php
 
-namespace GeneticAutoml\Helpers;
+namespace Rotifer\Helpers;
 
 class WeightHelper
 {

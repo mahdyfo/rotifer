@@ -1,9 +1,9 @@
 <?php
 
-namespace GeneticAutoml\Helpers;
+namespace Rotifer\Helpers;
 
-use GeneticAutoml\Models\Agent;
-use GeneticAutoml\Models\Neuron;
+use Rotifer\Models\Agent;
+use Rotifer\Models\Neuron;
 
 class ReportHelper
 {

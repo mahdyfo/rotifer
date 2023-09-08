@@ -1,9 +1,9 @@
 <?php
 
 require 'vendor/autoload.php';
-use GeneticAutoml\Activations\Activation;
-use GeneticAutoml\Models\StaticAgent;
-use GeneticAutoml\Models\World;
+use Rotifer\Activations\Activation;
+use Rotifer\Models\StaticAgent;
+use Rotifer\Models\World;
 /**
  * Options
  *      --quiet: Hide details
@@ -53,10 +53,10 @@ $world = $world->createAgents($population, count($data[0][0]), count($data[0][0]
 $world->step($fitnessFunction, $data, $generations, 0.8);
 
 // Report
-print_r(\GeneticAutoml\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
+print_r(\Rotifer\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
 
 // Test/Predict
-/** @var \GeneticAutoml\Models\StaticAgent $agent */
+/** @var \Rotifer\Models\StaticAgent $agent */
 $agent = $world->getBestAgent();
 $agent->resetValues();
 $total = count($data);

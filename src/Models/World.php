@@ -1,13 +1,13 @@
 <?php
 
-namespace GeneticAutoml\Models;
+namespace Rotifer\Models;
 
 use Exception;
-use GeneticAutoml\Encoders\BinaryEncoder;
-use GeneticAutoml\Encoders\Encoder;
-use GeneticAutoml\Encoders\HexEncoder;
-use GeneticAutoml\Encoders\HumanEncoder;
-use GeneticAutoml\Helpers\ReproductionHelper;
+use Rotifer\Encoders\BinaryEncoder;
+use Rotifer\Encoders\Encoder;
+use Rotifer\Encoders\HexEncoder;
+use Rotifer\Encoders\HumanEncoder;
+use Rotifer\Helpers\ReproductionHelper;
 
 class World
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace GeneticAutoml\Models;
+namespace Rotifer\Models;
 
 use Exception;
-use GeneticAutoml\Encoders\Encoder;
-use GeneticAutoml\Helpers\WeightHelper;
+use Rotifer\Encoders\Encoder;
+use Rotifer\Helpers\WeightHelper;
 
 class Agent
 {

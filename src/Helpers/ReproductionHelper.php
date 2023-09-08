@@ -1,10 +1,10 @@
 <?php
 
-namespace GeneticAutoml\Helpers;
+namespace Rotifer\Helpers;
 
-use GeneticAutoml\Models\Agent;
-use GeneticAutoml\Models\Neuron;
-use GeneticAutoml\Models\StaticAgent;
+use Rotifer\Models\Agent;
+use Rotifer\Models\Neuron;
+use Rotifer\Models\StaticAgent;
 
 class ReproductionHelper
 {

@@ -1,9 +1,9 @@
 <?php
 
-namespace GeneticAutoml\Models;
+namespace Rotifer\Models;
 
 use Exception;
-use GeneticAutoml\Helpers\WeightHelper;
+use Rotifer\Helpers\WeightHelper;
 
 /**
  * StaticAgent is an agent that doesn't have dynamic hidden neurons. It has traditional unchanged neurons and layers

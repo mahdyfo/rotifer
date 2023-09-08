@@ -1,8 +1,8 @@
 <?php
 
-namespace GeneticAutoml\Models;
+namespace Rotifer\Models;
 
-use GeneticAutoml\Activations\Activation;
+use Rotifer\Activations\Activation;
 
 class Neuron
 {

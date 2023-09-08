@@ -1,9 +1,9 @@
 <?php
 
-namespace GeneticAutoml\Encoders;
+namespace Rotifer\Encoders;
 
-use GeneticAutoml\Helpers\WeightHelper;
-use GeneticAutoml\Models\Neuron;
+use Rotifer\Helpers\WeightHelper;
+use Rotifer\Models\Neuron;
 
 class BinaryEncoder implements Encoder
 {

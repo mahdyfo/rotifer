@@ -1,6 +1,6 @@
 <?php
 
-namespace GeneticAutoml\Activations;
+namespace Rotifer\Activations;
 
 class Activation
 {

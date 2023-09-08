@@ -1,6 +1,6 @@
 <?php
 
-namespace GeneticAutoml\Encoders;
+namespace Rotifer\Encoders;
 
 class HexEncoder implements Encoder
 {

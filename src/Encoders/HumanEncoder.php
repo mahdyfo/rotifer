@@ -1,8 +1,8 @@
 <?php
 
-namespace GeneticAutoml\Encoders;
+namespace Rotifer\Encoders;
 
-use GeneticAutoml\Models\Neuron;
+use Rotifer\Models\Neuron;
 
 class HumanEncoder implements Encoder
 {
