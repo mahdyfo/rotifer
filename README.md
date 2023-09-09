@@ -3,16 +3,11 @@
 #### Autonomous evolution: From simplest to complex
 
 This is an evolutionary genetic AI framework that designs itself (AutoML).
-I believe the most powerful AI is the one which creates itself. A complex structure that human cannot understand, like our brains. 
+I believe the most powerful AI is the one which creates itself. A complex structure that human cannot understand, like our brains.
 
-Run:
+Solve XOR example:
 ```
-php src/index.php
-```
-
-Xor example:
-```
-php src/xor.php
+php xor.php
 ```
 
 ## Main Parts
