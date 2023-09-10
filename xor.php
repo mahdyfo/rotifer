@@ -11,7 +11,7 @@ use Rotifer\Models\World;
 
 const PROBABILITY_CROSSOVER = 0.5; // Crossover probability, 0.5 mean half genes from mother and half from father
 const PROBABILITY_MUTATE_WEIGHT = 0.4; // Percentage of agents to get mutated
-const MUTATE_WEIGHT_COUNT = 2; // number of weight mutations in every agent
+const MUTATE_WEIGHT_COUNT = 1; // number of weight mutations in every agent
 const PROBABILITY_MUTATE_ADD_NEURON = 0;
 const PROBABILITY_MUTATE_ADD_GENE = 0;
 const PROBABILITY_MUTATE_REMOVE_NEURON = 0;
@@ -43,7 +43,7 @@ $fitnessFunction = function (\Rotifer\Models\Agent $agent, $dataRow, $otherAgent
 // World
 $world = new World();
 $world->createAgents($population, 3, 1, $layers);
-$world->step($fitnessFunction, $data, $generations, 0.8);
+$world->step($fitnessFunction, $data, $generations, 0.2);
 
 // Test/Predict
 $agent = $world->getBestAgent();
