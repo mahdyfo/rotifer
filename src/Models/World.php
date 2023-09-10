@@ -306,8 +306,8 @@ class World
         }
 
         if (!in_array('--quiet', $_SERVER['argv'] ?? [])) {
-            echo 'Generation ' . $this->generation . ' - Best in generation: ' . $highestFitness
-                . ' - Best overall: ' . ($this->bestAgent?->getFitness() ?? 0)
+            echo 'Generation ' . $this->generation . ' - Best in generation: ' . str_pad($highestFitness, 15)
+                . ' - Best overall: ' . str_pad($this->bestAgent?->getFitness() ?? 0, 15)
                 . ' - Genes: ' . count($this->bestAgent->getGenomeArray())
                 . ' - H.Neurons: ' . count($this->bestAgent->getNeuronsByType(Neuron::TYPE_HIDDEN))
                 . ($this->generation != 1 && $improved ? ' - Improved' : null) . PHP_EOL;
