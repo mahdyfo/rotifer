@@ -104,7 +104,7 @@ class World
 
     /**
      * Run a reproduction tournament
-     * @param array $agentAndFitnessArray [[fitness, agentKey], [fitness, agentKey],...]
+     * @param array $agentAndFitnessArray [[fitness => 221, agentKey => 2], [fitness => 561, agentKey => 3],...]
      * @return array New agents for the new generation. [agent, agent, agent,...]
      * @throws Exception
      */
@@ -121,29 +121,36 @@ class World
                 return $b['fitness'] > $a['fitness'] ? 1 : -1;
             });
         }
+        $tempTournaments = $tournaments;
         $newAgents = [];
         $i = 0;
         while(count($newAgents) < $population) {
-            // If tournament doesn't contain any agent
-            if (count($tournaments[$i]) == 0) {
+            // Run the tournament again if population is not filled
+            if ($i == 0 && count($tempTournaments[$i]) == 0) {
+                $tempTournaments = $tournaments;
+            }
+
+            // If last tournament doesn't contain any agent
+            if ($i == array_key_last($tempTournaments) && count($tempTournaments[$i]) == 0) {
                 continue;
             }
 
             // If tournament only contains 1 agent
-            if (count($tournaments[$i]) == 1) {
-                $newAgents[] = $tournaments[$i][array_key_first($tournaments[$i])];
-                unset($tournaments[$i][array_key_first($tournaments[$i])]);
+            if (count($tempTournaments[$i]) == 1) {
+                $agentKey = $tempTournaments[$i][array_key_first($tempTournaments[$i])]['agent_key'];
+                $newAgents[] = $this->agents[$agentKey];
+                unset($tempTournaments[$i][array_key_first($tempTournaments[$i])]);
                 continue;
             }
 
             // Get 2 first ones from the tournament
-            $firstTournamentAgentKey = array_key_first($tournaments[$i]);
-            $secondTournamentAgentKey = array_key_first($tournaments[$i]);
-            $agent1 = $this->agents[$tournaments[$i][$firstTournamentAgentKey]['agent_key']];
-            $agent2 = $this->agents[$tournaments[$i][$secondTournamentAgentKey]['agent_key']];
+            $firstTournamentAgentKey = array_key_first($tempTournaments[$i]);
+            $agent1 = $this->agents[$tempTournaments[$i][$firstTournamentAgentKey]['agent_key']];
+            unset($tempTournaments[$i][$firstTournamentAgentKey]);
 
-            // Remove the ones that already reproduced
-            unset($tournaments[$i][$firstTournamentAgentKey], $tournaments[$i][$secondTournamentAgentKey]);
+            $secondTournamentAgentKey = array_key_first($tempTournaments[$i]);
+            $agent2 = $this->agents[$tempTournaments[$i][$secondTournamentAgentKey]['agent_key']];
+            unset($tempTournaments[$i][$secondTournamentAgentKey]);
 
             // Reproduce 2 children
             $newAgents[] = $this->reproduce($agent1, $agent2);
@@ -152,7 +159,7 @@ class World
             }
 
             $i++;
-            if ($i > array_key_last($tournaments)) {
+            if ($i > array_key_last($tempTournaments)) {
                 $i = 0; //rewind
             }
         }
