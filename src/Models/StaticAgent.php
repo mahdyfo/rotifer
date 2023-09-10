@@ -71,7 +71,9 @@ class StaticAgent extends Agent
         // If count is array, it indicates layers neurons, so the total count will be sum of the array
         $count = array_sum($layers);
 
-        return $this->createNeuron(Neuron::TYPE_HIDDEN, $count, false);
+        $this->createNeuron(Neuron::TYPE_HIDDEN, $count, false);
+
+        return $this;
     }
 
     public function setLayers(array $layers)

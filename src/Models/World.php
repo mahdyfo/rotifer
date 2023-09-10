@@ -51,20 +51,20 @@ class World
         if ($hiddenLayersNeurons) {
             // Static agents
             for ($i = 0; $i < $count; $i++) {
-                $agents[] = (new StaticAgent())
-                    ->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount, false)
-                    ->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount, false)
-                    ->createHiddenLayerNeurons($hiddenLayersNeurons)
-                    ->initRandomConnections();
+                $agent = new StaticAgent();
+                $agent->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount);
+                $agent->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount);
+                $agent->createHiddenLayerNeurons($hiddenLayersNeurons)->initRandomConnections();
+                $agents[] = $agent;
             }
         } else {
             // Dynamic agents
             for ($i = 0; $i < $count; $i++) {
-                $agents[] = (new Agent())
-                    ->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount)
-                    ->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount)
-                    ->setHasMemory($hasMemory)
-                    ->initRandomConnections();
+                $agent = new Agent();
+                $agent->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount);
+                $agent->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount);
+                $agent->setHasMemory($hasMemory)->initRandomConnections();
+                $agents[] = $agent;
             }
         }
 

@@ -72,7 +72,22 @@ class ReproductionHelper
         }
         // 1. Add neuron
         if (mt_rand(1, 10000) / 10000 <= $addNeuronProbability) {
-            $agent->createNeuron(Neuron::TYPE_HIDDEN, 1, true);
+            $newNeuron = $agent->createNeuron(Neuron::TYPE_HIDDEN);
+            // Find a random input or hidden neuron
+            if (mt_rand(0, 1) == 0) {
+                // Connect input to new neuron
+                $randomInput = $agent->getRandomNeuronByType(Neuron::TYPE_INPUT);
+                $agent->connectNeurons($randomInput, $newNeuron, WeightHelper::generateRandomWeight());
+            } else {
+                // Connect a hidden neuron to new neuron
+                $randomHidden = $agent->getRandomNeuronByType(Neuron::TYPE_HIDDEN);
+                $agent->connectNeurons($randomHidden, $newNeuron, WeightHelper::generateRandomWeight());
+            }
+
+            // Connect the new neuron to a random output
+            $randomOutput = $agent->getRandomNeuronByType(Neuron::TYPE_OUTPUT);
+            $agent->connectNeurons($newNeuron, $randomOutput, WeightHelper::generateRandomWeight());
+
             $agent->deleteRedundantGenes();
         }
 
