@@ -55,7 +55,7 @@ class Agent
         return $this->neurons[$type][$index] = (new Neuron())->setType($type)->setIndex($index);
     }
 
-    public function createNeuron(int $type, int $count = 1, bool $connectToAll = false): static
+    public function createNeuron(int $type, int $count = 1, bool $connectToAll = false): Neuron
     {
         for ($i = 0; $i < $count; $i++) {
             if (empty($this->neurons[$type])) {
@@ -70,7 +70,7 @@ class Agent
             }
         }
 
-        return $this;
+        return $this->neurons[$type][$index];
     }
 
     /**
@@ -228,6 +228,12 @@ class Agent
         }
 
         return [];
+    }
+
+    public function getRandomNeuronByType(int $type): Neuron
+    {
+        $randomNeurons = $this->getNeuronsByType($type);
+        return $randomNeurons[array_rand($randomNeurons)];
     }
 
     public function removeNeuron(int $type, int $index): static
