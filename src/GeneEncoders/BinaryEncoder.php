@@ -1,6 +1,6 @@
 <?php
 
-namespace Rotifer\Encoders;
+namespace Rotifer\GeneEncoders;
 
 use Rotifer\Helpers\WeightHelper;
 use Rotifer\Models\Neuron;

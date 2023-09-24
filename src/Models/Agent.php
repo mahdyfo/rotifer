@@ -3,7 +3,7 @@
 namespace Rotifer\Models;
 
 use Exception;
-use Rotifer\Encoders\Encoder;
+use Rotifer\GeneEncoders\Encoder;
 use Rotifer\Helpers\WeightHelper;
 
 class Agent

@@ -11,7 +11,7 @@ php xor.php
 ```
 
 ## Main Parts
-**World**, **Agent**, **Neuron**, **Encoders**, **Activation functions**, **Reproduction**
+**World**, **Agent**, **Neuron**, **GeneEncoders**, **Activation functions**, **Reproduction**
 
 ## Layering
 

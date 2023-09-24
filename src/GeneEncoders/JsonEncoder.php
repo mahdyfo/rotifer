@@ -1,10 +1,8 @@
 <?php
 
-namespace Rotifer\Encoders;
+namespace Rotifer\GeneEncoders;
 
-use Rotifer\Models\Neuron;
-
-class HumanEncoder implements Encoder
+class JsonEncoder implements Encoder
 {
     private static $instance;
 
@@ -18,12 +16,19 @@ class HumanEncoder implements Encoder
 
     public function encodeConnection(int $fromType, int $fromIndex, int $toType, int $toIndex, float $weight): string
     {
-        return ' From ' . ($fromType == Neuron::TYPE_INPUT ? 'input' : 'neuron') . ' ' . $fromIndex . ' to ' . ($toType == Neuron::TYPE_HIDDEN ? 'neuron' : 'output') . ' ' . $toIndex . ' weight ' . $weight . ' ';
+        return json_encode([$fromType, $fromIndex, $toType, $toIndex, $weight]);
     }
 
     public function decodeConnection(string $encodedGene): array
     {
-        // No need for decode. It is a human-readable encoder
-        return [];
+        $decoded = json_decode($encodedGene);
+
+        return [
+            'from_type' => $decoded[0],
+            'from_index' => $decoded[1],
+            'to_type' => $decoded[2],
+            'to_index' => $decoded[3],
+            'weight' => $decoded[4],
+        ];
     }
 }

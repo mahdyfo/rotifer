@@ -3,10 +3,10 @@
 namespace Rotifer\Models;
 
 use Exception;
-use Rotifer\Encoders\BinaryEncoder;
-use Rotifer\Encoders\Encoder;
-use Rotifer\Encoders\HexEncoder;
-use Rotifer\Encoders\HumanEncoder;
+use Rotifer\GeneEncoders\BinaryEncoder;
+use Rotifer\GeneEncoders\Encoder;
+use Rotifer\GeneEncoders\HexEncoder;
+use Rotifer\GeneEncoders\HumanEncoder;
 use Rotifer\Helpers\ReproductionHelper;
 
 class World

@@ -1,6 +1,6 @@
 <?php
 
-namespace Rotifer\Encoders;
+namespace Rotifer\GeneEncoders;
 
 interface Encoder
 {
