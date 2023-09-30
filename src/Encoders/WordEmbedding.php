@@ -21,7 +21,7 @@ class WordEmbedding
      * @param bool $withBias whether to add the value 1 at first of each word array as bias
      * @return array returns an array of embedded words
      */
-    public static function hashSentence(string $sentence, string $hashAlgo = 'md5', string $delimiter = '\s', bool $withBias = true): array
+    public static function hashSentence(string $sentence, string $hashAlgo = 'md5', string $delimiter = '\s+', bool $withBias = true): array
     {
         $results = [];
         $words = preg_split('/' . $delimiter . '/', $sentence);
