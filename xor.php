@@ -2,6 +2,7 @@
 
 require 'vendor/autoload.php';
 use Rotifer\Activations\Activation;
+use Rotifer\Models\StaticAgent;
 use Rotifer\Models\World;
 
 /**
@@ -34,7 +35,7 @@ $data = [
 ];
 
 // Fitness
-$fitnessFunction = function (\Rotifer\Models\Agent $agent, $dataRow, $otherAgents, $world) {
+$fitnessFunction = function (StaticAgent $agent, $dataRow, $otherAgents, $world) {
     $predictedOutput = $agent->getOutputValues()[0];
     $actualOutput = $dataRow[1][0];
     return (1.0 - abs($predictedOutput - $actualOutput));
@@ -47,7 +48,7 @@ $world->step($fitnessFunction, $data, $generations, 0.2);
 
 // Test/Predict
 $agent = $world->getBestAgent();
-$agent->resetValues();
+$agent->reset();
 foreach ($data as $row) {
     $agent->step($row[0]);
     var_dump('Input: ' . implode(',', $row[0]) . ' - Round: ' . round($agent->getOutputValues()[0]) . ' - Raw: ' . $agent->getOutputValues()[0]);

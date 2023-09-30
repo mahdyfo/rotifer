@@ -42,9 +42,6 @@ class World
         if ($count <= 1) {
             throw new Exception('The world cannot have only 1 agent.');
         }
-        if ($hasMemory && $hiddenLayersNeurons) {
-            throw new Exception('Static agents cannot have memory.');
-        }
 
         $agents = [];
 
@@ -62,6 +59,7 @@ class World
             for ($i = 0; $i < $count; $i++) {
                 $agent = new Agent();
                 $agent->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount);
+                $agent->createNeuron(Neuron::TYPE_HIDDEN, 1);
                 $agent->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount);
                 $agent->setHasMemory($hasMemory)->initRandomConnections();
                 $agents[] = $agent;
@@ -80,8 +78,9 @@ class World
         $world = self::createFromGenomesString($world, HexEncoder::getInstance(), ';', "\n", $hasMemory);
         $world->name = $name;
 
-        $bestAgent = file_get_contents('autosave/best_agent_' . $name . '.txt');
-        $world->bestAgent = Agent::createFromGenome($bestAgent, HexEncoder::getInstance())->setHasMemory($hasMemory);
+        // Set best agent
+        $world->bestAgent = Agent::loadFromFile($name, HexEncoder::getInstance(), $hasMemory, ';');
+        // Add the best agent among other agents
         $world->agents[array_key_last($world->agents)] = $world->bestAgent;
 
         return $world;
@@ -255,12 +254,18 @@ class World
         // Step all agents
         $fitnessByAgentKey = [];
         foreach ($this->agents as $key => $agent) {
-            // Reset any previous memory
-            $agent->resetValues();
+            // Reset any previous memory and fitness
+            $this->agents[$key]->reset();
 
             // Each data
             $fitness = 0;
             foreach ($data as $row) {
+                // Empty data means memory reset
+                if (empty($row)) {
+                    $this->agents[$key]->resetMemory();
+                    continue;
+                }
+
                 // Step
                 $this->agents[$key]->step($row[0]);
 

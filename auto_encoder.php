@@ -58,7 +58,7 @@ print_r(\Rotifer\Helpers\ReportHelper::agentDetails($world->getBestAgent()));
 // Test/Predict
 /** @var \Rotifer\Models\StaticAgent $agent */
 $agent = $world->getBestAgent();
-$agent->resetValues();
+$agent->reset();
 $total = count($data);
 $correctness = 0;
 foreach ($data as $row) {
