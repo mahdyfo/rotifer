@@ -86,17 +86,27 @@ class Agent
     }
 
     /**
-     * Connect all inputs to all outputs with random weights
+     * Connect all inputs to all outputs to 1 hidden neuron and the neuron to all outputs with random weights
      * @return Agent
      * @throws Exception
      */
     public function initRandomConnections(): static
     {
-        /** @var Neuron $inputNeuron */
-        /** @var Neuron $outputNeuron */
-        foreach ($this->getNeuronsByType(Neuron::TYPE_INPUT) as $inputNeuron) {
-            foreach ($this->getNeuronsByType(Neuron::TYPE_OUTPUT) as $outputNeuron) {
-                $this->connectNeurons($inputNeuron, $outputNeuron, WeightHelper::generateRandomWeight());
+        $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
+        $hiddenNeurons = $this->getNeuronsByType(Neuron::TYPE_HIDDEN);
+        $outputNeurons = $this->getNeuronsByType(Neuron::TYPE_OUTPUT);
+
+        // Input to hidden neuron
+        foreach ($inputNeurons as $inputNeuron) {
+            foreach ($hiddenNeurons as $hiddenNeuron) {
+                $this->connectNeurons($inputNeuron, $hiddenNeuron, WeightHelper::generateRandomWeight());
+            }
+        }
+
+        // Last hidden neuron to outputs
+        foreach ($outputNeurons as $outputNeuron) {
+            foreach ($hiddenNeurons as $hiddenNeuron) {
+                $this->connectNeurons($hiddenNeuron, $outputNeuron, WeightHelper::generateRandomWeight());
             }
         }
 
@@ -361,13 +371,26 @@ class Agent
         }
     }
 
-    public function resetValues(): static
+    /**
+     * Reset fitness and memory
+     * @return $this
+     */
+    public function reset(): static
+    {
+        $this->resetMemory();
+        $this->setFitness(0);
+        return $this;
+    }
+
+    public function resetMemory(): static
     {
         foreach ($this->getNeuronsByType(Neuron::TYPE_HIDDEN) as $neuron) {
             $neuron->setValue(0);
         }
-        $this->setFitness(0);
-
+        foreach ($this->getNeuronsByType(Neuron::TYPE_OUTPUT) as $neuron) {
+            $neuron->setValue(0);
+        }
+        $this->step = 0;
         return $this;
     }
 
@@ -388,15 +411,12 @@ class Agent
         // Set inputs
         $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
         foreach ($inputNeurons as $key => $inputNeuron) {
-            /** @var Neuron $inputNeuron */
             $inputNeuron->setValue($inputs[$key]);
         }
 
         if (!$this->hasMemory()) {
             // If the agent doesn't have memory, init hidden neurons with zero
-            foreach ($this->getNeuronsByType(Neuron::TYPE_HIDDEN) as $neuron) {
-                $neuron->setValue(0);
-            }
+            $this->resetMemory();
         }
 
         // Calculate neurons
@@ -407,15 +427,6 @@ class Agent
         foreach ($neuronGroups as $neuronGroup) {
             // Foreach all hidden neurons
             foreach ($neuronGroup as $neuron) {
-                if ($this->hasMemory() && $neuron->getType() == Neuron::TYPE_HIDDEN) {
-                    // If the agent has memory, use dropout technique (20%) to avoid over-fitting or learning the train-set
-                    if (mt_rand(1, 100) <= 20) {
-                        // Delete the neuron memory
-                        $neuron->setValue(0);
-                        // Don't calculate
-                        continue;
-                    }
-                }
                 $newValue = 0;
                 // Foreach inward connections [INPUT => [435 => 2.6, 266 => 1.4], NEURON => [...]]
                 foreach ($neuron->getInConnections() as $type => $neuronsByIndex) {
@@ -437,6 +448,22 @@ class Agent
         }
 
         return $this;
+    }
+
+    /**
+     * Loads from autosave/best_agent_{name}.txt
+     * @param string $name
+     * @param Encoder $decoder
+     * @param bool $hasMemory
+     * @param string $separator
+     * @return $this
+     * @throws Exception
+     */
+    public static function loadFromFile(string $name, Encoder $decoder, bool $hasMemory = false, string $separator = ';'): static
+    {
+        $genome = file_get_contents('autosave/best_agent_' . $name . '.txt');
+
+        return Agent::createFromGenome($genome, $decoder, $separator)->setHasMemory($hasMemory);
     }
 
     /**
@@ -523,6 +550,7 @@ class Agent
     /**
      * Set additional custom user data
      * @param array $additional
+     * @return Agent
      */
     public function setAdditional(array $additional): static
     {
