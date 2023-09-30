@@ -24,7 +24,7 @@ class WordEmbedding
     public static function hashSentence(string $sentence, string $hashAlgo = 'md5', string $delimiter = '\s+', bool $withBias = true): array
     {
         $results = [];
-        $words = preg_split('/' . $delimiter . '/', $sentence);
+        $words = preg_split('/' . $delimiter . '/', trim($sentence));
         foreach ($words as $word) {
             $embeddedWord = static::hashWord($word, $hashAlgo);
             $results[] = $withBias ? [1, ...$embeddedWord] : $embeddedWord;
