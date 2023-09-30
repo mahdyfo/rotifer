@@ -27,6 +27,7 @@ class StaticAgent extends Agent
 
         $layerNeurons = [];
         $i = 0;
+        // Get each layer neurons from our 1d layer that contains all hidden neurons (extract layers from single layer)
         foreach ($this->getLayers() as $layerNeuronsCount) {
             $layerNeurons[] = array_slice($hiddenNeurons, $i, $layerNeuronsCount, true);
             $i += $layerNeuronsCount;
