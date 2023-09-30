@@ -4,6 +4,7 @@ namespace Rotifer\Models;
 
 use Exception;
 use Rotifer\GeneEncoders\Encoder;
+use Rotifer\GeneEncoders\HexEncoder;
 use Rotifer\Helpers\WeightHelper;
 
 class Agent
@@ -409,8 +410,7 @@ class Agent
 
         /** @var Neuron $neuron */
         // Set inputs
-        $inputNeurons = $this->getNeuronsByType(Neuron::TYPE_INPUT);
-        foreach ($inputNeurons as $key => $inputNeuron) {
+        foreach ($this->getNeuronsByType(Neuron::TYPE_INPUT) as $key => $inputNeuron) {
             $inputNeuron->setValue($inputs[$key]);
         }
 
