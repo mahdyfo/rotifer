@@ -414,8 +414,8 @@ class Agent
             $inputNeuron->setValue($inputs[$key]);
         }
 
+        // If the agent doesn't have memory, init hidden neurons with zero
         if (!$this->hasMemory()) {
-            // If the agent doesn't have memory, init hidden neurons with zero
             $this->resetMemory();
         }
 
