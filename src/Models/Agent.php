@@ -332,9 +332,10 @@ class Agent
                     if ($index == $otherIndex) {
                         $this->neurons[Neuron::TYPE_HIDDEN][$index]->deleteConnection(Neuron::TYPE_HIDDEN, $index);
                     }
-                    // Remove in-connection from future neurons
+                    // Remove connection from future neurons
                     if ($otherIndex > $index) {
                         $this->neurons[Neuron::TYPE_HIDDEN][$index]->deleteInConnection(Neuron::TYPE_HIDDEN, $otherIndex);
+                        $this->neurons[Neuron::TYPE_HIDDEN][$otherIndex]->deleteOutConnection(Neuron::TYPE_HIDDEN, $index);
                     }
                 }
             }
