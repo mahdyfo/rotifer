@@ -77,9 +77,11 @@ class StaticAgent extends Agent
         return $this;
     }
 
-    public function setLayers(array $layers)
+    public function setLayers(array $layers): static
     {
         $this->layers = $layers;
+
+        return $this;
     }
 
     public function getLayers(): array
