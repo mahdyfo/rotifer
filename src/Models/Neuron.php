@@ -26,7 +26,7 @@ class Neuron
      */
     private array $outConnections = [];
 
-    public function setType(int $type): self
+    public function setType(int $type): static
     {
         $this->type = $type;
 
@@ -58,7 +58,7 @@ class Neuron
         $this->setValue($activation($this->getValue()));
     }
 
-    public function setIndex(int $index): self
+    public function setIndex(int $index): static
     {
         $this->index = $index;
 
@@ -75,7 +75,7 @@ class Neuron
         return $this->inConnections;
     }
 
-    public function setInConnection($type, $index, $weight): self
+    public function setInConnection($type, $index, $weight): static
     {
         $this->inConnections[$type][$index] = $weight;
 
@@ -87,7 +87,7 @@ class Neuron
         return $this->outConnections;
     }
 
-    public function setOutConnection($type, $index, $weight): self
+    public function setOutConnection($type, $index, $weight): static
     {
         $this->outConnections[$type][$index] = $weight;
 
