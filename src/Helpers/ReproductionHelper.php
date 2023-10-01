@@ -105,14 +105,11 @@ class ReproductionHelper
             // Hidden -> Hidden / Hidden -> Output
             foreach ($hiddens as $index => $hidden) {
                 foreach ($hiddens as $hidden2) {
-                    // Don't include future feedbacks
-                    if ($hidden->getIndex() <= $hidden2->getIndex()) {
-                        // If agent has no memory, don't make any self connections
-                        if (!$agent->hasMemory() && $hidden->getIndex() == $hidden2->getIndex()) {
-                            continue;
-                        }
-                        $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden2->getIndex();
+                    // If agent has no memory, don't make any self/future connections
+                    if (!$agent->hasMemory() && $hidden->getIndex() >= $hidden2->getIndex()) {
+                        continue;
                     }
+                    $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden2->getIndex();
                 }
                 foreach ($outputs as $output) {
                     $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_OUTPUT . '.' . $output->getIndex();
