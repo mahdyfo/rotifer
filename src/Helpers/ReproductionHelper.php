@@ -64,25 +64,13 @@ class ReproductionHelper
      */
     public static function mutate(Agent $agent, float $changeGeneProbability = 0.5, float $addNeuronProbability = 0.3, float $addConnectionProbability = 0.3, float $deleteNeuronProbability = 0.1, float $deleteConnectionProbability = 0.1): Agent
     {
-        if ($agent instanceof StaticAgent) {
-            $addNeuronProbability = 0;
-            $addConnectionProbability = 0;
-            $deleteNeuronProbability = 0;
-            $deleteConnectionProbability = 0;
-        }
         // 1. Add neuron
         if (mt_rand(1, 10000) / 10000 <= $addNeuronProbability) {
             $newNeuron = $agent->createNeuron(Neuron::TYPE_HIDDEN);
-            // Find a random input or hidden neuron
-            if (mt_rand(0, 1) == 0) {
-                // Connect input to new neuron
-                $randomInput = $agent->getRandomNeuronByType(Neuron::TYPE_INPUT);
-                $agent->connectNeurons($randomInput, $newNeuron, WeightHelper::generateRandomWeight());
-            } else {
-                // Connect a hidden neuron to new neuron
-                $randomHidden = $agent->getRandomNeuronByType(Neuron::TYPE_HIDDEN);
-                $agent->connectNeurons($randomHidden, $newNeuron, WeightHelper::generateRandomWeight());
-            }
+
+            // Connect input to new neuron
+            $randomInput = $agent->getRandomNeuronByType(Neuron::TYPE_INPUT);
+            $agent->connectNeurons($randomInput, $newNeuron, WeightHelper::generateRandomWeight());
 
             // Connect the new neuron to a random output
             $randomOutput = $agent->getRandomNeuronByType(Neuron::TYPE_OUTPUT);
@@ -118,11 +106,10 @@ class ReproductionHelper
             // Hidden -> Hidden / Hidden -> Output
             foreach ($hiddens as $index => $hidden) {
                 foreach ($hiddens as $hidden2) {
-                    // No memory? Then don't include self-connections and future feedbacks
-                    if (!$agent->hasMemory() && $hidden2->getIndex() >= $hidden->getIndex()) {
-                        continue;
+                    // Don't include future feedbacks
+                    if ($hidden->getIndex() <= $hidden2->getIndex()) {
+                        $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden2->getIndex();
                     }
-                    $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden2->getIndex();
                 }
                 foreach ($outputs as $output) {
                     $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_OUTPUT . '.' . $output->getIndex();
@@ -209,6 +196,8 @@ class ReproductionHelper
                    $agent->connectToAll($output);
                }
             }
+
+            $agent->deleteRedundantGenes();
         }
 
         return $agent;
