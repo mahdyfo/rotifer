@@ -4,7 +4,6 @@ namespace Rotifer\Helpers;
 
 use Rotifer\Models\Agent;
 use Rotifer\Models\Neuron;
-use Rotifer\Models\StaticAgent;
 
 class ReproductionHelper
 {
@@ -108,6 +107,10 @@ class ReproductionHelper
                 foreach ($hiddens as $hidden2) {
                     // Don't include future feedbacks
                     if ($hidden->getIndex() <= $hidden2->getIndex()) {
+                        // If agent has no memory, don't make any self connections
+                        if (!$agent->hasMemory() && $hidden->getIndex() == $hidden2->getIndex()) {
+                            continue;
+                        }
                         $possibleConnections[] = Neuron::TYPE_HIDDEN . '.' . $index . '.' . Neuron::TYPE_HIDDEN . '.' . $hidden2->getIndex();
                     }
                 }
