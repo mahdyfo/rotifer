@@ -4,7 +4,6 @@ namespace Rotifer\Models;
 
 use Exception;
 use Rotifer\GeneEncoders\Encoder;
-use Rotifer\GeneEncoders\HexEncoder;
 use Rotifer\Helpers\WeightHelper;
 
 class Agent
@@ -356,14 +355,29 @@ class Agent
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
             }
 
-            // Delete stray neurons without any out-connections
-            if (count($neuron->getOutConnections()) == 0) {
+            // Delete stray neurons without any in or out-connections
+            if (count($neuron->getOutConnections()) == 0 || count($neuron->getInConnections()) == 0) {
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
             }
+        }
 
-            // Delete stray neurons without any in & out-connections
-            if (count($neuron->getInConnections()) == 0 && count($neuron->getOutConnections()) == 0) {
-                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+        // Delete stray connections
+        foreach ($this->neurons as $type => $neuronsByIndex) {
+            foreach ($neuronsByIndex as $index => $neuron) {
+                foreach ($neuron->getInConnections() as $connectionType => $connectionsByType) {
+                    foreach ($connectionsByType as $connectionIndex => $weight) {
+                        if (!$this->findNeuron($connectionType, $connectionIndex)) {
+                            $this->neurons[$type][$index]->deleteInConnection($connectionType, $connectionIndex);
+                        }
+                    }
+                }
+                foreach ($neuron->getOutConnections() as $connectionType => $connectionsByType) {
+                    foreach ($connectionsByType as $connectionIndex => $weight) {
+                        if (!$this->findNeuron($connectionType, $connectionIndex)) {
+                            $this->neurons[$type][$index]->deleteOutConnection($connectionType, $connectionIndex);
+                        }
+                    }
+                }
             }
         }
 
@@ -419,7 +433,7 @@ class Agent
             $this->resetMemory();
         }
 
-        // Calculate neurons
+        // Calculate values
         $neuronGroups = [
             $this->getNeuronsByType(Neuron::TYPE_HIDDEN),
             $this->getNeuronsByType(Neuron::TYPE_OUTPUT)
