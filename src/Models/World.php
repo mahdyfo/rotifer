@@ -51,7 +51,9 @@ class World
                 $agent = new StaticAgent();
                 $agent->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount);
                 $agent->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount);
-                $agent->createHiddenLayerNeurons($hiddenLayersNeurons)->initRandomConnections();
+                $agent->createHiddenLayerNeurons($hiddenLayersNeurons);
+                $agent->setHasMemory($hasMemory);
+                $agent->initRandomConnections();
                 $agents[] = $agent;
             }
         } else {
@@ -61,7 +63,8 @@ class World
                 $agent->createNeuron(Neuron::TYPE_INPUT, $inputNeuronsCount);
                 $agent->createNeuron(Neuron::TYPE_HIDDEN, 1);
                 $agent->createNeuron(Neuron::TYPE_OUTPUT, $outputNeuronsCount);
-                $agent->setHasMemory($hasMemory)->initRandomConnections();
+                $agent->setHasMemory($hasMemory);
+                $agent->initRandomConnections();
                 $agents[] = $agent;
             }
         }
@@ -181,16 +184,28 @@ class World
             // Crossover
             $newAgent = ReproductionHelper::crossover($agent1, $agent2, PROBABILITY_CROSSOVER);
 
+            // Set memory
+            if ($agent1->hasMemory() && $agent2->hasMemory()) {
+                $newAgent->setHasMemory(true);
+            } elseif ($agent1->hasMemory() || $agent2->hasMemory()) {
+                // If one of them has memory, with 50% chance the child has memory too
+                $newAgent->setHasMemory(mt_rand(1, 2) == 1);
+            } else {
+                $newAgent->setHasMemory(false);
+            }
+
             // Mutation
             $newAgent = ReproductionHelper::mutate($newAgent, PROBABILITY_MUTATE_WEIGHT, PROBABILITY_MUTATE_ADD_NEURON, PROBABILITY_MUTATE_ADD_GENE, PROBABILITY_MUTATE_REMOVE_NEURON, PROBABILITY_MUTATE_REMOVE_GENE);
 
             // Make a fresh agent (remove all neuron values and reset step)
+            $hasMemory = $newAgent->hasMemory();
             if ($agent1 instanceof StaticAgent) {
                 /** @var StaticAgent $newAgent */
                 $newAgent = StaticAgent::createFromGenome($newAgent->getGenomeArray());
+                $newAgent->setHasMemory($hasMemory);
                 $newAgent->setLayers($agent1->getLayers());
             } else {
-                $newAgent = Agent::createFromGenome($newAgent->getGenomeArray());
+                $newAgent = Agent::createFromGenome($newAgent->getGenomeArray())->setHasMemory($hasMemory);
             }
 
             $attempts++;
@@ -203,15 +218,6 @@ class World
                 );
             }
         } while (empty($newAgent->getGenomeArray()));
-
-        if ($agent1->hasMemory() && $agent2->hasMemory()) {
-            $newAgent->setHasMemory(true);
-        } elseif ($agent1->hasMemory() || $agent2->hasMemory()) {
-            // If one of them has memory, with 50% chance the child has memory too
-            $newAgent->setHasMemory(mt_rand(1, 2) == 1);
-        } else {
-            $newAgent->setHasMemory(false);
-        }
 
         return $newAgent;
     }
