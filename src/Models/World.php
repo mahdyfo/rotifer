@@ -82,7 +82,7 @@ class World
         $world->name = $name;
 
         // Set best agent
-        $world->bestAgent = Agent::loadFromFile($name, HexEncoder::getInstance(), $hasMemory, ';');
+        $world->bestAgent = Agent::loadFromFile($name, HexEncoder::getInstance(), $hasMemory);
         // Add the best agent among other agents
         $world->agents[array_key_last($world->agents)] = $world->bestAgent;
 
@@ -218,14 +218,24 @@ class World
      * @param int $generationCount how many generations to pass, 0 for unlimited
      * @param float $surviveRate How many percent of the population should pass to the next generation
      * @param mixed $stopFunction The minimum fitness that eliminates the world
+     * @param int $batchSize 0 means the batch size is equal to the whole data size
      * @return World
      * @throws Exception
      */
-    public function step($fitnessFunction, array $data, int $generationCount = 1, float $surviveRate = 0.9, $stopFunction = null): self
+    public function step($fitnessFunction, array $data, int $generationCount = 1, float $surviveRate = 0.9, int $batchSize = 0, $stopFunction = null): self
     {
+        $dataCount = count($data);
+        $dataChunkCount = ($batchSize == 0 || $batchSize >= $dataCount) ? $dataCount : ceil($dataCount / $batchSize);
+
         while ($generationCount == 0 || $this->generation <= $generationCount) {
-            $this->nextGeneration($fitnessFunction, $data, $surviveRate);
+            if ($batchSize > 0 && $batchSize != $dataCount) {
+                $batchStartIndex = ($this->generation - 1) % $dataChunkCount  * $batchSize;
+                $this->nextGeneration($fitnessFunction, array_slice($data, $batchStartIndex, $batchSize), $surviveRate);
+            } else {
+                $this->nextGeneration($fitnessFunction, $data, $surviveRate);
+            }
             $this->generation++;
+
             // If best fitness passes stop fitness, stop the world
             if (!is_null($stopFunction) && $stopFunction($this)) {
                 return $this;
