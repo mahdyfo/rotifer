@@ -75,14 +75,15 @@ class Agent
 
     /**
      * @param array|string $genome raw array or string encoded genome
+     * @param bool $hasMemory
      * @param Encoder|null $decoder
      * @param string $separator If you provide string, you should specify the separator between genes
      * @return Agent
      * @throws Exception
      */
-    public static function createFromGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): static
+    public static function createFromGenome(array|string $genome, bool $hasMemory = false, Encoder $decoder = null, string $separator = ';'): static
     {
-        return (new static())->setGenome($genome, $decoder, $separator);
+        return (new static())->setHasMemory($hasMemory)->setGenome($genome, $decoder, $separator);
     }
 
     /**
@@ -312,6 +313,7 @@ class Agent
     /**
      * Delete stray hidden neurons without any out-connections, or just 1 out-connection to themselves
      * @return void
+     * @throws Exception
      */
     public function deleteRedundantGenes(): void
     {
@@ -340,24 +342,24 @@ class Agent
                 }
             }
 
-            // Delete neurons with 1 only out-connection just to themselves
+            // Delete stray neurons without any in or out-connections
+            if (count($neuron->getOutConnections()) == 0 || count($neuron->getInConnections()) == 0) {
+                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+            }
+
+            // Delete neurons with 1 only in-connection just from themselves (self-feedback neuron to others without input)
+            if (
+                count($neuron->getInConnections()) == 1 &&
+                isset($neuron->getInConnections()[Neuron::TYPE_HIDDEN][$index])
+            ) {
+                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+            }
+
+            // Delete neurons with 1 only out-connection just to themselves (self-feedback neuron from others without output)
             if (
                 count($neuron->getOutConnections()) == 1 &&
                 isset($neuron->getOutConnections()[Neuron::TYPE_HIDDEN][$index])
             ) {
-                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
-            }
-
-            // Delete neurons with 1 only in-connection just from themselves
-            if (
-                count($neuron->getInConnections()) == 1 &&
-                isset($neuron->getOutConnections()[Neuron::TYPE_HIDDEN][$index])
-            ) {
-                unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
-            }
-
-            // Delete stray neurons without any in or out-connections
-            if (count($neuron->getOutConnections()) == 0 || count($neuron->getInConnections()) == 0) {
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
             }
         }
@@ -444,10 +446,11 @@ class Agent
             foreach ($neuronGroup as $neuron) {
                 $newValue = 0;
                 // Foreach inward connections [INPUT => [435 => 2.6, 266 => 1.4], NEURON => [...]]
-                foreach ($neuron->getInConnections() as $type => $neuronsByIndex) {
-                    foreach ($neuronsByIndex as $index => $weight) {
-                        // Neuron value += inward neuron value * weight
-                        $newValue += $this->findOrCreateNeuron($type, $index)->getValue() * $weight;
+                foreach ($neuron->getInConnections() as $sourceType => $neuronsByIndex) {
+                    foreach ($neuronsByIndex as $sourceIndex => $weight) {
+                        // For self-connections or from-future connections, it uses the previous value
+                        // For to-future connections, obviously it has value and doesn't use the previous one
+                        $newValue += $this->findNeuron($sourceType, $sourceIndex)->getValue() * $weight;
                     }
                 }
                 $neuron->setValue($newValue)->applyActivation(ACTIVATION);
@@ -478,7 +481,7 @@ class Agent
     {
         $genome = file_get_contents('autosave/best_agent_' . $name . '.txt');
 
-        return Agent::createFromGenome($genome, $decoder, $separator)->setHasMemory($hasMemory);
+        return Agent::createFromGenome($genome, $hasMemory, $decoder, $separator);
     }
 
     /**

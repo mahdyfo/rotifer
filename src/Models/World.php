@@ -184,28 +184,17 @@ class World
             // Crossover
             $newAgent = ReproductionHelper::crossover($agent1, $agent2, PROBABILITY_CROSSOVER);
 
-            // Set memory
-            if ($agent1->hasMemory() && $agent2->hasMemory()) {
-                $newAgent->setHasMemory(true);
-            } elseif ($agent1->hasMemory() || $agent2->hasMemory()) {
-                // If one of them has memory, with 50% chance the child has memory too
-                $newAgent->setHasMemory(mt_rand(1, 2) == 1);
-            } else {
-                $newAgent->setHasMemory(false);
-            }
-
             // Mutation
             $newAgent = ReproductionHelper::mutate($newAgent, PROBABILITY_MUTATE_WEIGHT, PROBABILITY_MUTATE_ADD_NEURON, PROBABILITY_MUTATE_ADD_GENE, PROBABILITY_MUTATE_REMOVE_NEURON, PROBABILITY_MUTATE_REMOVE_GENE);
 
-            // Make a fresh agent (remove all neuron values and reset step)
+            // Make a fresh agent (unique connections, remove all neuron values and reset step)
             $hasMemory = $newAgent->hasMemory();
             if ($agent1 instanceof StaticAgent) {
                 /** @var StaticAgent $newAgent */
-                $newAgent = StaticAgent::createFromGenome($newAgent->getGenomeArray());
-                $newAgent->setHasMemory($hasMemory);
+                $newAgent = StaticAgent::createFromGenome($newAgent->getGenomeArray(), $hasMemory);
                 $newAgent->setLayers($agent1->getLayers());
             } else {
-                $newAgent = Agent::createFromGenome($newAgent->getGenomeArray())->setHasMemory($hasMemory);
+                $newAgent = Agent::createFromGenome($newAgent->getGenomeArray(), $hasMemory);
             }
 
             $attempts++;
@@ -361,7 +350,7 @@ class World
 
         $agents = [];
         foreach ($genomes as $genome) {
-            $agents[] = Agent::createFromGenome($genome, $decoder, $geneSeparator)->setHasMemory($hasMemory);
+            $agents[] = Agent::createFromGenome($genome, $hasMemory, $decoder, $geneSeparator);
         }
 
         $world->setAgents($agents);

@@ -23,7 +23,16 @@ class ReproductionHelper
         // Result:
         // Agentx: AA F   BBB  CC H   DDD  EE J (Changed agent1)
 
-        $newAgent = Agent::createFromGenome($agent1->getGenomeArray());
+        // Set memory
+        $newAgentHasMemory = false;
+        if ($agent1->hasMemory() && $agent2->hasMemory()) {
+            $newAgentHasMemory = true;
+        } elseif ($agent1->hasMemory() || $agent2->hasMemory()) {
+            // If one of them has memory, with 50% chance the child has memory too
+            $newAgentHasMemory = (mt_rand(1, 2) == 1);
+        }
+
+        $newAgent = Agent::createFromGenome($agent1->getGenomeArray(), $newAgentHasMemory);
 
         $genome2 = $agent2->getGenomeArray();
         // Iterate through all connections of agent2
