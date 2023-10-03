@@ -1,6 +1,7 @@
 <?php
 
 require 'vendor/autoload.php';
+
 use Rotifer\Activations\Activation;
 use Rotifer\Models\StaticAgent;
 use Rotifer\Models\World;
@@ -51,5 +52,5 @@ $agent = $world->getBestAgent();
 $agent->reset();
 foreach ($data as $row) {
     $agent->step($row[0]);
-    var_dump('Input: ' . implode(',', $row[0]) . ' - Round: ' . round($agent->getOutputValues()[0]) . ' - Raw: ' . $agent->getOutputValues()[0]);
+    var_dump('Input: ' . implode(',', $row[0]) . ' - Actual: ' . $row[1][0] . ' - Predicted Round: ' . round($agent->getOutputValues()[0]) . ' - Predicted Raw: ' . $agent->getOutputValues()[0]);
 }
