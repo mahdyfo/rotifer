@@ -2,7 +2,7 @@
 
 namespace Rotifer\Encoders;
 
-class WordEmbedding
+class RandomWordEmbedding
 {
     public static function hashWord(string $word, $hashAlgo = 'crc32'): array
     {
