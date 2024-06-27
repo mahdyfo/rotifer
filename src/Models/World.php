@@ -32,7 +32,7 @@ class World
      * @param int $count How many agents to create
      * @param $inputNeuronsCount
      * @param $outputNeuronsCount
-     * @param array $hiddenLayersNeurons For having static agents, for example 3 layers with 4, 5, 4 each: [4, 5, 4]
+     * @param array $hiddenLayersNeurons For having static agents, for example 3 layers with 4, 5, 4 each: [4, 5, 4]. Leave empty for dynamic size.
      * @param bool $hasMemory Do they have memory or they should be trained for each training row without any previous knowledge
      * @return World
      * @throws Exception
