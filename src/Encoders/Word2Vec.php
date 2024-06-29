@@ -40,7 +40,7 @@ class Word2Vec
 			$charIndex = $i % $partLength;
 			// Convert each part of the hash to a number and normalize
 			$part = substr($hash, $charIndex * 2, 2); // Take two characters at a time
-			$vector[] = (hexdec($part) / 255.0) * 2 - 1; // Normalize to [-1, 1]
+			$vector[] = (hexdec($part) / 255.0); // Normalize to [0, 1]
 		}
 		return $vector;
 	}
@@ -113,10 +113,10 @@ class Word2Vec
 	/**
 	 * Converts a sentence to array of word vectors and add eos character vector at the end
 	 * @param string $text
-	 * @param string $eos End of sentence character
+	 * @param string|null $eos End of sentence character
 	 * @return array[]
 	 */
-	public function sentence2vec(string $text, string $eos = "\n"): array
+	public function sentence2vec(string $text, string $eos = null): array
 	{
 		$tokens = $this->tokenize($text);
 
@@ -126,7 +126,7 @@ class Word2Vec
 		}
 
 		// Add eos (End of sentence)
-		if (!empty($eos)) {
+		if (!is_null($eos)) {
 			$vectors[] = $this->word2vec($eos);
 		}
 
