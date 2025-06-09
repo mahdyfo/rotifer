@@ -1,8 +1,16 @@
 {
     "name": "mahdyfo/rotifer",
-    "description": "Genetic AI that creates it deep learning network structure",
-    "license": "GPL-3.0-or-later",
-    "keywords": ["AI","machine learning", "deep learning", "evolution genetic ai"],
+    "description": "A genetic AI framework that evolves its own deep learning architecture (AutoML)",
+    "license": "Apache-2.0",
+    "keywords": [
+        "AI",
+        "genetic algorithm",
+        "machine learning",
+        "deep learning",
+        "AutoML",
+        "neural networks",
+        "neuroevolution"
+    ],
     "autoload": {
         "psr-4": {
             "Rotifer\\": "src/"
