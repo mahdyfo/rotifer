@@ -164,6 +164,7 @@ const ONLY_CALCULATE_FIRST_STEP_TIME = false; // Doesn't calculate all steps, bu
 
 ## ❤️ Support & Contribution
 We welcome issues, stars, pull requests, collaborations, feel free to contribute ideas or optimize the agent training strategies. Potential ideas:
+- Feedback outputs of memory-network to another smaller network that has 3 outputs: type(add/delete neuron or connection), index1, index2. So the network can be changed during the testing by itself
 - Parallelization
 - GPU
 - Visualizer for agent evolution
