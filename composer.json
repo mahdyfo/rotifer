@@ -26,6 +26,12 @@
         "php": ">=8.0.0"
     },
     "require-dev": {
-        "psy/psysh": "^0.12.2"
+        "psy/psysh": "^0.12.2",
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rotifer\\Tests\\": "tests/"
+        }
     }
 }
