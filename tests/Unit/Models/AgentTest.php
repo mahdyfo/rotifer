@@ -101,7 +101,7 @@ class AgentTest extends TestCase
     public function testCannotConnectOutputToOutput(): void
     {
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Cannot connect output to output');
+        $this->expectExceptionMessage('Cannot connect from output neuron');
 
         $agent = new Agent();
         $output1 = $agent->createNeuron(Neuron::TYPE_OUTPUT, 1);
@@ -113,7 +113,7 @@ class AgentTest extends TestCase
     public function testCannotConnectHiddenToInput(): void
     {
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Cannot connect hidden to input');
+        $this->expectExceptionMessage('Cannot connect to input neuron');
 
         $agent = new Agent();
         $hidden = $agent->createNeuron(Neuron::TYPE_HIDDEN, 1);
