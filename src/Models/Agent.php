@@ -118,18 +118,18 @@ class Agent
     {
         if ($weight > WeightHelper::MAX_WEIGHT || $weight < -WeightHelper::MAX_WEIGHT) {
             throw new Exception('Weight of connection from ' . $neuron1->getType() . ':' . $neuron1->getIndex()
-                . ' to ' . $neuron1->getType() . ':' . $neuron1->getIndex()
+                . ' to ' . $neuron2->getType() . ':' . $neuron2->getIndex()
                 . ' is out of allowed range of +-' . WeightHelper::MAX_WEIGHT . '. Current value: ' . $weight);
         }
 
         if ($neuron1->getType() == Neuron::TYPE_INPUT && $neuron2->getType() == Neuron::TYPE_INPUT) {
             throw new Exception('Cannot connect input to input');
         }
-        if ($neuron1->getType() == Neuron::TYPE_OUTPUT && $neuron2->getType() == Neuron::TYPE_OUTPUT) {
-            throw new Exception('Cannot connect output to output');
+        if ($neuron1->getType() == Neuron::TYPE_OUTPUT) {
+            throw new Exception('Cannot connect from output neuron');
         }
-        if ($neuron1->getType() == Neuron::TYPE_HIDDEN && $neuron2->getType() == Neuron::TYPE_INPUT) {
-            throw new Exception('Cannot connect hidden to input');
+        if ($neuron2->getType() == Neuron::TYPE_INPUT) {
+            throw new Exception('Cannot connect to input neuron');
         }
 
         $neuron2->setInConnection($neuron1->getType(), $neuron1->getIndex(), $weight);
@@ -343,22 +343,38 @@ class Agent
             }
 
             // Delete stray neurons without any in or out-connections
-            if (count($neuron->getOutConnections()) == 0 || count($neuron->getInConnections()) == 0) {
+            $outConnections = $neuron->getOutConnections();
+            $inConnections = $neuron->getInConnections();
+
+            if (empty($outConnections) || empty($inConnections)) {
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+                continue;
+            }
+
+            // Count total connections
+            $totalInConnections = 0;
+            foreach ($inConnections as $connType => $conns) {
+                $totalInConnections += count($conns);
+            }
+
+            $totalOutConnections = 0;
+            foreach ($outConnections as $connType => $conns) {
+                $totalOutConnections += count($conns);
             }
 
             // Delete neurons with 1 only in-connection just from themselves (self-feedback neuron to others without input)
             if (
-                count($neuron->getInConnections()) == 1 &&
-                isset($neuron->getInConnections()[Neuron::TYPE_HIDDEN][$index])
+                $totalInConnections == 1 &&
+                isset($inConnections[Neuron::TYPE_HIDDEN][$index])
             ) {
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
+                continue;
             }
 
             // Delete neurons with 1 only out-connection just to themselves (self-feedback neuron from others without output)
             if (
-                count($neuron->getOutConnections()) == 1 &&
-                isset($neuron->getOutConnections()[Neuron::TYPE_HIDDEN][$index])
+                $totalOutConnections == 1 &&
+                isset($outConnections[Neuron::TYPE_HIDDEN][$index])
             ) {
                 unset($this->neurons[Neuron::TYPE_HIDDEN][$index]);
             }
