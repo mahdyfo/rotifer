@@ -106,6 +106,11 @@ class World
         return $this;
     }
 
+    public function getGeneration(): int
+    {
+        return $this->generation;
+    }
+
     /**
      * Run a reproduction tournament
      * @param array $agentAndFitnessArray [[fitness => 221, agentKey => 2], [fitness => 561, agentKey => 3],...]
