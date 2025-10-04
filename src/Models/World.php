@@ -84,7 +84,9 @@ class World
         // Set best agent
         $world->bestAgent = Agent::loadFromFile($name, HexEncoder::getInstance(), $hasMemory);
         // Add the best agent among other agents
-        $world->agents[array_key_last($world->agents)] = $world->bestAgent;
+        if (!empty($world->agents)) {
+            $world->agents[array_key_last($world->agents)] = $world->bestAgent;
+        }
 
         return $world;
     }
@@ -130,10 +132,12 @@ class World
             // Run the tournament again if population is not filled
             if ($i == 0 && count($tempTournaments[$i]) == 0) {
                 $tempTournaments = $tournaments;
+                $i = 0;
             }
 
             // If last tournament doesn't contain any agent
             if ($i == array_key_last($tempTournaments) && count($tempTournaments[$i]) == 0) {
+                $i = 0;
                 continue;
             }
 
@@ -229,7 +233,7 @@ class World
 
         while ($generationCount == 0 || $this->generation <= $generationCount) {
             if ($batchSize > 0 && $batchSize != $dataCount) {
-                $batchStartIndex = ($this->generation - 1) % $dataChunkCount  * $batchSize;
+                $batchStartIndex = (($this->generation - 1) % $dataChunkCount) * $batchSize;
                 $this->nextGeneration($fitnessFunction, array_slice($data, $batchStartIndex, $batchSize), $surviveRate);
             } else {
                 $this->nextGeneration($fitnessFunction, $data, $surviveRate);
@@ -285,8 +289,8 @@ class World
                 'agent_key' => $key
             ];
             if (!in_array('--quiet', $_SERVER['argv'] ?? [])) {
-                if (!isset($percent)) $percent = 1;
-                echo 'Generation ' . $this->generation . ' - ' . min(100, str_pad(round(($percent++) * 100 / count($this->agents), 1), 4)) . "%\r";
+                $percent = isset($percent) ? $percent + 1 : 1;
+                echo 'Generation ' . $this->generation . ' - ' . min(100, str_pad(round($percent * 100 / count($this->agents), 1), 4)) . "%\r";
                 flush();
             }
         }
