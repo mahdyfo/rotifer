@@ -260,6 +260,8 @@ class World
     //TODO: add synchronous param: True to run every agent simultaneously with others, False to age 1 agent completely before running the next
     public function nextGeneration($fitnessFunction, array $data, float $surviveRate = 0.9): self
     {
+        $startTime = microtime(true);
+
         // Step all agents
         $fitnessByAgentKey = [];
         foreach ($this->agents as $key => $agent) {
@@ -320,11 +322,26 @@ class World
         }
 
         if (!in_array('--quiet', $_SERVER['argv'] ?? [])) {
-            echo 'Generation ' . $this->generation . ' - Best in generation: ' . str_pad($highestFitness, 15)
-                . ' - Best overall: ' . str_pad($this->bestAgent?->getFitness() ?? 0, 15)
-                . ' - Genes: ' . count($this->bestAgent->getGenomeArray())
-                . ' - H.Neurons: ' . count($this->bestAgent->getNeuronsByType(Neuron::TYPE_HIDDEN))
-                . ($this->generation != 1 && $improved ? ' - Improved' : null) . PHP_EOL;
+            $duration = microtime(true) - $startTime;
+            $timestamp = date('H:i:s');
+            $genNum = str_pad($this->generation, 4, ' ', STR_PAD_LEFT);
+            $genBest = number_format($highestFitness, 6);
+            $overallBest = number_format($this->bestAgent?->getFitness() ?? 0, 6);
+            $geneCount = str_pad(count($this->bestAgent->getGenomeArray()), 4, ' ', STR_PAD_LEFT);
+            $hiddenCount = str_pad(count($this->bestAgent->getNeuronsByType(Neuron::TYPE_HIDDEN)), 3, ' ', STR_PAD_LEFT);
+            $status = ($this->generation != 1 && $improved ? ' [NEW BEST]' : '');
+
+            echo sprintf(
+                "[%s] Gen %s | Fitness: %s (gen) / %s (best) | Genes: %s | Hidden: %s | Duration: %.3fs%s",
+                $timestamp,
+                $genNum,
+                $genBest,
+                $overallBest,
+                $geneCount,
+                $hiddenCount,
+                $duration,
+                $status
+            ) . PHP_EOL;
             flush();
         }
 
