@@ -141,10 +141,19 @@ class ReproductionHelper
         // 3. Change weight
         if (mt_rand(1, 10000) / 10000 <= $changeGeneProbability) {
             $genome = $agent->getGenomeArray();
-            for ($i = 0; $i < MUTATE_WEIGHT_COUNT ?? 1; $i++) {
-                $genome[array_rand($genome)]['weight'] = WeightHelper::generateRandomWeight();
+            if (!empty($genome)) {
+                for ($i = 0; $i < (MUTATE_WEIGHT_COUNT ?? 1); $i++) {
+                    $randomKey = array_rand($genome);
+                    $gene = $genome[$randomKey];
+                    // Update the weight in the agent directly
+                    $fromNeuron = $agent->findNeuron($gene['from_type'], $gene['from_index']);
+                    $toNeuron = $agent->findNeuron($gene['to_type'], $gene['to_index']);
+                    if ($fromNeuron && $toNeuron) {
+                        $newWeight = WeightHelper::generateRandomWeight();
+                        $agent->connectNeurons($fromNeuron, $toNeuron, $newWeight);
+                    }
+                }
             }
-            $agent->setGenome($genome);
         }
 
         // 4. Delete neuron
