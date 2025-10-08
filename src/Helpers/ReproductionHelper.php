@@ -157,9 +157,7 @@ class ReproductionHelper
                             $newWeight = WeightHelper::generateRandomWeight();
                         } else {
                             // Small adjustment to existing weight
-                            $adjustmentRange = defined('MUTATE_WEIGHT_ADJUSTMENT_RANGE')
-                                ? MUTATE_WEIGHT_ADJUSTMENT_RANGE
-                                : 0.5;
+                            $adjustmentRange = defined('MUTATE_WEIGHT_ADJUSTMENT_RANGE') ? MUTATE_WEIGHT_ADJUSTMENT_RANGE : 0.5;
                             $currentWeight = $gene['weight'];
                             $adjustment = (mt_rand(-10000, 10000) / 10000) * $adjustmentRange;
                             $newWeight = max(-WeightHelper::MAX_WEIGHT, min(WeightHelper::MAX_WEIGHT, $currentWeight + $adjustment));
