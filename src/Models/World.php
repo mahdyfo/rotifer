@@ -357,6 +357,41 @@ class World
         // Reproduction
         $newAgents = $this->tournament($fitnessByAgentKey);
 
+        // Diversity injection: Replace worst performers with fresh random agents
+        // This prevents premature convergence by maintaining population diversity
+        $diversityInjectionRate = defined('DIVERSITY_INJECTION_RATE') ? DIVERSITY_INJECTION_RATE : 0.05;
+        if ($diversityInjectionRate > 0 && $this->generation > 1) {
+            $numFreshAgents = max(1, (int)round(count($newAgents) * $diversityInjectionRate));
+
+            // Replace the worst agents with new random ones
+            for ($i = 0; $i < $numFreshAgents; $i++) {
+                $idx = count($newAgents) - 1 - $i;
+                if ($idx >= 0 && isset($newAgents[$idx])) {
+                    // Create a fresh agent with random connections
+                    $template = $newAgents[$idx];
+                    $freshAgent = new Agent();
+                    $freshAgent->createNeuron(Neuron::TYPE_INPUT, count($template->getNeuronsByType(Neuron::TYPE_INPUT)));
+                    $freshAgent->createNeuron(Neuron::TYPE_HIDDEN, 1);
+                    $freshAgent->createNeuron(Neuron::TYPE_OUTPUT, count($template->getNeuronsByType(Neuron::TYPE_OUTPUT)));
+                    $freshAgent->setHasMemory($template->hasMemory());
+                    $freshAgent->initRandomConnections();
+                    $newAgents[$idx] = $freshAgent;
+                }
+            }
+        }
+
+        // Elitism: Always preserve the best agent(s)
+        $elitismCount = defined('ELITISM_COUNT') ? ELITISM_COUNT : 1;
+        if ($elitismCount > 0 && !empty($this->bestAgent)) {
+            // Replace the last N agents with copies of the top N performers
+            for ($i = 0; $i < min($elitismCount, count($newAgents)); $i++) {
+                $eliteAgentKey = $fitnessByAgentKey[$i]['agent_key'] ?? null;
+                if ($eliteAgentKey !== null && isset($this->agents[$eliteAgentKey])) {
+                    $newAgents[count($newAgents) - 1 - $i - (int)($diversityInjectionRate * count($newAgents))] = clone $this->agents[$eliteAgentKey];
+                }
+            }
+        }
+
         $this->setAgents($newAgents);
 
         return $this;
