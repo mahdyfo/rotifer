@@ -149,7 +149,22 @@ class ReproductionHelper
                     $fromNeuron = $agent->findNeuron($gene['from_type'], $gene['from_index']);
                     $toNeuron = $agent->findNeuron($gene['to_type'], $gene['to_index']);
                     if ($fromNeuron && $toNeuron) {
-                        $newWeight = WeightHelper::generateRandomWeight();
+                        // Check if we should completely randomize or make small adjustment
+                        $randomizeCompletely = defined('PROBABILITY_MUTATE_WEIGHT_RANDOM') && mt_rand(1, 10000) / 10000 <= PROBABILITY_MUTATE_WEIGHT_RANDOM;
+
+                        if ($randomizeCompletely) {
+                            // Complete random weight
+                            $newWeight = WeightHelper::generateRandomWeight();
+                        } else {
+                            // Small adjustment to existing weight
+                            $adjustmentRange = defined('MUTATE_WEIGHT_ADJUSTMENT_RANGE')
+                                ? MUTATE_WEIGHT_ADJUSTMENT_RANGE
+                                : 0.5;
+                            $currentWeight = $gene['weight'];
+                            $adjustment = (mt_rand(-10000, 10000) / 10000) * $adjustmentRange;
+                            $newWeight = max(-WeightHelper::MAX_WEIGHT, min(WeightHelper::MAX_WEIGHT, $currentWeight + $adjustment));
+                        }
+
                         $agent->connectNeurons($fromNeuron, $toNeuron, $newWeight);
                     }
                 }
