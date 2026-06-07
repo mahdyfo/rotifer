@@ -81,7 +81,7 @@ class Agent
      * @return Agent
      * @throws Exception
      */
-    public static function createFromGenome(array|string $genome, bool $hasMemory = false, Encoder $decoder = null, string $separator = ';'): static
+    public static function createFromGenome(array|string $genome, bool $hasMemory = false, ?Encoder $decoder = null, string $separator = ';'): static
     {
         return (new static())->setHasMemory($hasMemory)->setGenome($genome, $decoder, $separator);
     }
@@ -193,7 +193,7 @@ class Agent
      * @return Agent
      * @throws Exception
      */
-    public function setGenome(array|string $genome, Encoder $decoder = null, string $separator = ';'): static
+    public function setGenome(array|string $genome, ?Encoder $decoder = null, string $separator = ';'): static
     {
         // Separate genes if genome is provided as string
         if (!is_array($genome)) {
@@ -259,7 +259,7 @@ class Agent
      * @param mixed $iterationCallback The function to execute on each element
      * @return array [gene, gene]
      */
-    public function getGenomeArray(Encoder $encoder = null, $iterationCallback = null): array
+    public function getGenomeArray(?Encoder $encoder = null, $iterationCallback = null): array
     {
         $neuronGroups = [
             $this->getNeuronsByType(Neuron::TYPE_HIDDEN),
