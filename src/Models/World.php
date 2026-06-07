@@ -34,10 +34,12 @@ class World
      * @param $outputNeuronsCount
      * @param array $hiddenLayersNeurons For having static agents, for example 3 layers with 4, 5, 4 each: [4, 5, 4]. Leave empty for dynamic size.
      * @param bool $hasMemory Do they have memory or they should be trained for each training row without any previous knowledge
+     * @param string $agentType Type of agent: 'Agent', 'StaticAgent', or 'TransformerAgent'
+     * @param int $attentionHeads Number of attention heads for TransformerAgent
      * @return World
      * @throws Exception
      */
-    public function createAgents(int $count, $inputNeuronsCount, $outputNeuronsCount, array $hiddenLayersNeurons = [], bool $hasMemory = false): self
+    public function createAgents(int $count, $inputNeuronsCount, $outputNeuronsCount, array $hiddenLayersNeurons = [], bool $hasMemory = false, string $agentType = 'Agent', int $attentionHeads = 2): self
     {
         if ($count <= 1) {
             throw new Exception('The world cannot have only 1 agent.');
@@ -54,6 +56,18 @@ class World
                 $agent->createHiddenLayerNeurons($hiddenLayersNeurons);
                 $agent->setHasMemory($hasMemory);
                 $agent->initRandomConnections();
+                $agents[] = $agent;
+            }
+        } elseif ($agentType === 'TransformerAgent') {
+            // Transformer agents with attention
+            for ($i = 0; $i < $count; $i++) {
+                $agent = TransformerAgent::createTransformer(
+                    $inputNeuronsCount,
+                    3, // Hidden size - will evolve
+                    $outputNeuronsCount,
+                    $attentionHeads,
+                    $hasMemory
+                );
                 $agents[] = $agent;
             }
         } else {
@@ -202,6 +216,10 @@ class World
                 /** @var StaticAgent $newAgent */
                 $newAgent = StaticAgent::createFromGenome($newAgent->getGenomeArray(), $hasMemory);
                 $newAgent->setLayers($agent1->getLayers());
+            } elseif ($agent1 instanceof TransformerAgent) {
+                /** @var TransformerAgent $newAgent */
+                $newAgent = TransformerAgent::createFromGenome($newAgent->getGenomeArray(), $hasMemory);
+                $newAgent->setAttentionHeads($agent1->getAttentionHeads());
             } else {
                 $newAgent = Agent::createFromGenome($newAgent->getGenomeArray(), $hasMemory);
             }
@@ -369,12 +387,26 @@ class World
                 if ($idx >= 0 && isset($newAgents[$idx])) {
                     // Create a fresh agent with random connections
                     $template = $newAgents[$idx];
-                    $freshAgent = new Agent();
-                    $freshAgent->createNeuron(Neuron::TYPE_INPUT, count($template->getNeuronsByType(Neuron::TYPE_INPUT)));
-                    $freshAgent->createNeuron(Neuron::TYPE_HIDDEN, 1);
-                    $freshAgent->createNeuron(Neuron::TYPE_OUTPUT, count($template->getNeuronsByType(Neuron::TYPE_OUTPUT)));
-                    $freshAgent->setHasMemory($template->hasMemory());
-                    $freshAgent->initRandomConnections();
+
+                    if ($template instanceof TransformerAgent) {
+                        // Create fresh transformer agent
+                        $freshAgent = TransformerAgent::createTransformer(
+                            count($template->getNeuronsByType(Neuron::TYPE_INPUT)),
+                            3,
+                            count($template->getNeuronsByType(Neuron::TYPE_OUTPUT)),
+                            $template->getAttentionHeads(),
+                            $template->hasMemory()
+                        );
+                    } else {
+                        // Create fresh standard agent
+                        $freshAgent = new Agent();
+                        $freshAgent->createNeuron(Neuron::TYPE_INPUT, count($template->getNeuronsByType(Neuron::TYPE_INPUT)));
+                        $freshAgent->createNeuron(Neuron::TYPE_HIDDEN, 1);
+                        $freshAgent->createNeuron(Neuron::TYPE_OUTPUT, count($template->getNeuronsByType(Neuron::TYPE_OUTPUT)));
+                        $freshAgent->setHasMemory($template->hasMemory());
+                        $freshAgent->initRandomConnections();
+                    }
+
                     $newAgents[$idx] = $freshAgent;
                 }
             }
