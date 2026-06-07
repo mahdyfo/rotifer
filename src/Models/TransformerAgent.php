@@ -37,10 +37,10 @@ class TransformerAgent extends Agent
     /**
      * Override step to include attention mechanism
      */
-    public function step(array $inputValues): static
+    public function step(array $inputs): static
     {
         // Store input in attention memory for context
-        $this->attentionMemory[] = $inputValues;
+        $this->attentionMemory[] = $inputs;
 
         // Limit attention memory to last N inputs (sequence length)
         $maxContextLength = 10; // Can be made configurable
@@ -49,7 +49,7 @@ class TransformerAgent extends Agent
         }
 
         // Compute attention-weighted inputs
-        $attentionWeightedInput = $this->computeAttention($inputValues);
+        $attentionWeightedInput = $this->computeAttention($inputs);
 
         // Use attention-weighted input for standard forward pass
         return parent::step($attentionWeightedInput);
