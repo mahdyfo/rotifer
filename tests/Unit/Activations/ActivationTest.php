@@ -211,4 +211,51 @@ class ActivationTest extends TestCase
         $this->assertLessThan(Activation::leakyRelu(2), Activation::leakyRelu(1));
         $this->assertLessThan(Activation::tanh(2), Activation::tanh(1));
     }
+
+    public function testSoftmaxReturnsValueInZeroToOneRange(): void
+    {
+        // Softmax approximation uses a scaled sigmoid, so it must stay in (0, 1)
+        foreach ([-10.0, -1.0, 0.0, 1.0, 10.0] as $value) {
+            $result = Activation::softmax($value);
+            $this->assertIsFloat($result);
+            $this->assertGreaterThan(0, $result);
+            $this->assertLessThan(1, $result);
+        }
+    }
+
+    public function testSoftmaxAtZeroEqualsSigmoidAtZero(): void
+    {
+        // softmax(0) = sigmoid(0 * 2) = sigmoid(0) = 0.5
+        $this->assertEqualsWithDelta(0.5, Activation::softmax(0.0), 0.0001);
+    }
+
+    public function testSoftmaxIsMonotonicallyIncreasing(): void
+    {
+        $this->assertLessThan(Activation::softmax(2.0), Activation::softmax(1.0));
+        $this->assertLessThan(Activation::softmax(0.0), Activation::softmax(-1.0));
+    }
+
+    public function testGeluAtZeroIsZero(): void
+    {
+        $this->assertEqualsWithDelta(0.0, Activation::gelu(0.0), 0.0001);
+    }
+
+    public function testGeluApproximatesKnownValues(): void
+    {
+        // GELU(1) ≈ 0.8412, GELU(-1) ≈ -0.1588 (standard tanh approximation)
+        $this->assertEqualsWithDelta(0.8412, Activation::gelu(1.0), 0.001);
+        $this->assertEqualsWithDelta(-0.1588, Activation::gelu(-1.0), 0.001);
+    }
+
+    public function testGeluIsNearlyIdentityForLargePositiveValues(): void
+    {
+        // For large positive inputs GELU(x) approaches x
+        $this->assertEqualsWithDelta(8.0, Activation::gelu(8.0), 0.01);
+    }
+
+    public function testGeluSuppressesLargeNegativeValues(): void
+    {
+        // For large negative inputs GELU(x) approaches 0
+        $this->assertEqualsWithDelta(0.0, Activation::gelu(-8.0), 0.001);
+    }
 }

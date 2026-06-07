@@ -397,6 +397,14 @@ class World
                             $template->getAttentionHeads(),
                             $template->hasMemory()
                         );
+                    } elseif ($template instanceof StaticAgent) {
+                        // Create fresh static agent preserving the fixed layer structure
+                        $freshAgent = new StaticAgent();
+                        $freshAgent->createNeuron(Neuron::TYPE_INPUT, count($template->getNeuronsByType(Neuron::TYPE_INPUT)));
+                        $freshAgent->createNeuron(Neuron::TYPE_OUTPUT, count($template->getNeuronsByType(Neuron::TYPE_OUTPUT)));
+                        $freshAgent->createHiddenLayerNeurons($template->getLayers());
+                        $freshAgent->setHasMemory($template->hasMemory());
+                        $freshAgent->initRandomConnections();
                     } else {
                         // Create fresh standard agent
                         $freshAgent = new Agent();
@@ -429,7 +437,7 @@ class World
         return $this;
     }
 
-    public function getGenomesString(Encoder $encoder = null, $geneIterationCallback = null, $geneSeparator = ';', $genomeSeparator = "\n"): string
+    public function getGenomesString(?Encoder $encoder = null, $geneIterationCallback = null, $geneSeparator = ';', $genomeSeparator = "\n"): string
     {
         if (is_null($encoder)) {
             $encoder = BinaryEncoder::getInstance();
@@ -441,7 +449,7 @@ class World
         return implode($genomeSeparator, $genomes);
     }
 
-    public static function createFromGenomesString($genomes, Encoder $decoder = null, $geneSeparator = ';', $genomeSeparator = "\n", bool $hasMemory = false): self
+    public static function createFromGenomesString($genomes, ?Encoder $decoder = null, $geneSeparator = ';', $genomeSeparator = "\n", bool $hasMemory = false): self
     {
         $world = new self();
 

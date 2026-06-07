@@ -5,8 +5,11 @@ namespace Rotifer\Tests\Unit\Models;
 use PHPUnit\Framework\TestCase;
 use Rotifer\Models\World;
 use Rotifer\Models\Agent;
+use Rotifer\Models\StaticAgent;
+use Rotifer\Models\TransformerAgent;
 use Rotifer\Models\Neuron;
 use Rotifer\Activations\Activation;
+use Rotifer\GeneEncoders\HexEncoder;
 
 // Define constants for testing
 if (!defined('ACTIVATION')) {
@@ -318,6 +321,150 @@ class WorldTest extends TestCase
 
         foreach ($world->getAgents() as $agent) {
             $this->assertFalse($agent->hasMemory());
+        }
+    }
+
+    public function testGenerationCounterStartsAtOne(): void
+    {
+        $world = new World();
+        $world->createAgents(5, 3, 1);
+
+        $this->assertSame(1, $world->getGeneration());
+    }
+
+    public function testGenerationCounterAdvancesWithStep(): void
+    {
+        $world = new World();
+        $world->createAgents(6, 3, 1);
+
+        $data = [[[1, 0, 0], [0]]];
+        $fitnessFunction = fn (Agent $agent, $dataRow) => 1.0;
+
+        $world->step($fitnessFunction, $data, 3, 0.5);
+
+        // After running 3 generations the counter sits at 4 (1 -> 2 -> 3 -> 4)
+        $this->assertSame(4, $world->getGeneration());
+    }
+
+    public function testGenomesStringRoundTrip(): void
+    {
+        $world = new World();
+        $world->createAgents(4, 3, 1);
+
+        $encoded = $world->getGenomesString(HexEncoder::getInstance());
+        $this->assertNotEmpty($encoded);
+
+        $restored = World::createFromGenomesString($encoded, HexEncoder::getInstance());
+
+        $this->assertCount(4, $restored->getAgents());
+        foreach ($restored->getAgents() as $agent) {
+            $this->assertInstanceOf(Agent::class, $agent);
+            $this->assertNotEmpty($agent->getGenomeArray());
+        }
+    }
+
+    public function testLoadAutoSavedRestoresWorldAndBestAgent(): void
+    {
+        $name = 'persist_test';
+        $world = new World($name);
+        $world->createAgents(5, 3, 1);
+
+        // Persist the population and a designated best agent to the autosave files
+        file_put_contents(
+            'autosave/world_' . $name . '.txt',
+            $world->getGenomesString(HexEncoder::getInstance())
+        );
+        $bestSource = $world->getAgents()[0];
+        file_put_contents(
+            'autosave/best_agent_' . $name . '.txt',
+            $bestSource->getGenomeString(HexEncoder::getInstance())
+        );
+
+        $loaded = World::loadAutoSaved($name);
+
+        $this->assertCount(5, $loaded->getAgents());
+        $this->assertInstanceOf(Agent::class, $loaded->getBestAgent());
+        $this->assertNotEmpty($loaded->getBestAgent()->getGenomeArray());
+    }
+
+    public function testLoadAutoSavedThrowsWhenFileMissing(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('does not exist');
+
+        World::loadAutoSaved('nonexistent_world_' . uniqid());
+    }
+
+    public function testReproducePreservesStaticAgentTypeAndLayers(): void
+    {
+        $world = new World();
+        $world->createAgents(10, 2, 1, [3]);
+
+        $agents = $world->getAgents();
+        $child = $world->reproduce($agents[0], $agents[1]);
+
+        $this->assertInstanceOf(StaticAgent::class, $child);
+        $this->assertSame([3], $child->getLayers());
+    }
+
+    public function testStaticAgentPopulationStaysStaticAcrossGenerations(): void
+    {
+        // Regression test: diversity injection used to replace static agents with
+        // plain dynamic Agents, breaking StaticAgent-typed fitness functions.
+        $world = new World('static_diversity');
+        $world->createAgents(20, 3, 1, [4, 3]);
+
+        $data = [
+            [[1, 0, 0], [0]],
+            [[1, 0, 1], [1]],
+        ];
+        $fitnessFunction = function (StaticAgent $agent, $dataRow) {
+            $predicted = $agent->getOutputValues()[0];
+            return 1.0 - abs($predicted - $dataRow[1][0]);
+        };
+
+        // Several generations so diversity injection (gen > 1) runs
+        $world->step($fitnessFunction, $data, 5, 0.5);
+
+        foreach ($world->getAgents() as $agent) {
+            $this->assertInstanceOf(StaticAgent::class, $agent);
+        }
+    }
+
+    public function testCreateTransformerAgents(): void
+    {
+        $world = new World();
+        $world->createAgents(6, 3, 1, [], true, 'TransformerAgent', 2);
+
+        $agents = $world->getAgents();
+        $this->assertCount(6, $agents);
+
+        foreach ($agents as $agent) {
+            $this->assertInstanceOf(TransformerAgent::class, $agent);
+            $this->assertSame(2, $agent->getAttentionHeads());
+            $this->assertTrue($agent->hasMemory());
+        }
+    }
+
+    public function testTransformerAgentPopulationStaysTransformerAcrossGenerations(): void
+    {
+        $world = new World('transformer_diversity');
+        $world->createAgents(20, 3, 1, [], true, 'TransformerAgent', 2);
+
+        $data = [
+            [[1, 0, 0], [0]],
+            [[1, 0, 1], [1]],
+        ];
+        $fitnessFunction = function (TransformerAgent $agent, $dataRow) {
+            $predicted = $agent->getOutputValues()[0];
+            return 1.0 - abs($predicted - $dataRow[1][0]);
+        };
+
+        $world->step($fitnessFunction, $data, 4, 0.5);
+
+        foreach ($world->getAgents() as $agent) {
+            $this->assertInstanceOf(TransformerAgent::class, $agent);
+            $this->assertSame(2, $agent->getAttentionHeads());
         }
     }
 }
