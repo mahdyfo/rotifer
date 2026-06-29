@@ -41,34 +41,88 @@ Every mechanism is independently switchable in a problem's config; turned off, i
 - **Lifetime learning** - an organism refines its own weights during its life (the Baldwin effect). A configurable fraction of what it learns is written back into its genome and **inherited** (Lamarckian).
 - **Islands & migration** - different demes drift toward different solutions and trade their best on a ring.
 
-## Run it
+## Getting started
+
+### 1. Install
 
 ```bash
-php bin/rotifer run xor                     # live terminal dashboard
-php bin/rotifer run weather_forecast        # multi-class classification
-php bin/rotifer run flappy_bird             # a game, learned with no training data
-php bin/rotifer run xor --seed=42 --quiet   # reproducible, silent
-php bin/rotifer run auto_encoder --parallel=8   # evaluate across 8 worker processes
+composer install
 ```
 
-### See it in the browser
+Pure PHP - all you need is PHP ≥ 8.2 and Composer.
+
+### 2. Evolve a problem in the terminal
 
 ```bash
-# terminal 1 - stream the run to disk
-php bin/rotifer run flappy_bird --web
-
-# terminal 2 - serve the live dashboard, then open http://localhost:8080
-php bin/rotifer serve flappy_bird
+php bin/rotifer list                # see the built-in problems
+php bin/rotifer run xor             # evolve XOR with a live terminal dashboard
 ```
 
-The web dashboard shows a live fitness chart, the champion's network graph (excitatory/inhibitory
-connections, weights on hover, changed wiring flashing before it settles), and an island map
-with mutation and trauma levels. From the control panel you can pick a problem, tune it, toggle each
-biology mechanism (every option has a hover description), and start/stop runs. When a run finishes the
-**champion predictions** table reports a success rate, you can **feed the champion a custom input** and
-watch each neuron light up by how strongly it fires, and you can **build a brand-new problem** ("+ New
-problem") just by typing in example inputs and the outputs you expect - the engine adapts to it with
-defaults recommended for that data.
+You'll watch fitness climb generation by generation; when it stops (or you press Ctrl+C) it prints
+the champion's predictions, a success rate, and the best genome as hex. A few variations:
+
+```bash
+php bin/rotifer run xor --seed=42 --quiet        # reproducible, no live output
+php bin/rotifer run weather_forecast             # multi-class classification
+php bin/rotifer run flappy_bird                  # a game, learned with no training data
+php bin/rotifer run auto_encoder --parallel=8    # evaluate across 8 worker processes
+php bin/rotifer help                             # the full, annotated option list
+```
+
+### 3. Use the browser dashboard
+
+One persistent server drives every run, so you never need a separate port per experiment.
+
+```bash
+php bin/rotifer serve               # then open http://localhost:8080
+```
+
+From the page you can:
+
+1. **Pick a problem** from the dropdown - its recommended defaults load into the control panel.
+2. **Tune any option.** The top row has the common knobs; expand **advanced parameters** and
+   **biology parameters** for everything else (see the table below).
+3. **Toggle the biology** you want - trauma, adaptive mutation, lifetime learning.
+4. Press **Start** and watch the fitness chart, the champion's network graph (hover any connection
+   or neuron for the underlying math), and the island map update live.
+5. Press **Stop** any time, or **Continue** to resume the last run from where it left off.
+6. When a run ends, read the **champion predictions** table, **feed the champion a custom input** and
+   watch each neuron light up by how strongly it fires, or hit **+ New problem** to author your own
+   from example input → output rows.
+
+Prefer to keep launching from the terminal but still watch in the browser? Run the two side by side -
+`--web` streams a CLI run to the same dashboard:
+
+```bash
+php bin/rotifer serve                       # terminal 1 - the dashboard
+php bin/rotifer run flappy_bird --web       # terminal 2 - streams this run to the page
+```
+
+### 4. Every option, both ways
+
+The command line and the dashboard expose **exactly the same knobs**: anything you can pass as a
+`--flag` you can set in a field, and the reverse. (They share one schema - `src/Runtime/RunOptions.php` -
+so they can't drift apart.) A flag or field only overrides what you set; everything else keeps the
+problem's own `config()`. Run `php bin/rotifer help` for the annotated list, or open the dashboard's
+**advanced parameters** / **biology parameters** panels.
+
+| Group | Knobs | CLI flags |
+|---|---|---|
+| Core | population, generations, islands, seed, parallel, resume | `--population` `--generations` `--islands` `--seed` `--parallel[=N]` `--resume` |
+| Structure / selection | survive rate, elitism, diversity, init hidden, hidden layers, simplicity, activation | `--survive-rate` `--elitism` `--diversity` `--initial-hidden` `--hidden-layers=5,3,5` `--simplicity` `--activation=tanh` |
+| Reproduction | crossover, weight-mutation chance, **weight count / adjust / randomize**, add/remove neuron & connection | `--crossover` `--weight-mutation` `--weight-count` `--weight-adjust` `--weight-randomize` `--add-neuron` `--add-connection` `--remove-neuron` `--remove-connection` |
+| Trauma | enable, intensity, decay | `--trauma` `--trauma-intensity` `--trauma-decay` |
+| Adaptive mutation | enable, patience, up/down factor, min/max scale | `--adaptive-mutation` `--adaptive-patience` `--adaptive-up` `--adaptive-down` `--adaptive-min` `--adaptive-max` |
+| Lifetime learning | enable, steps, step size, lamarckian fraction | `--lifetime-learning` `--lifetime-steps` `--lifetime-step-size` `--lamarckian` |
+| Migration | every N generations, top K | `--migration-every` `--migration-top` |
+
+For example, the weight-mutation mechanics behind `->weightMutation(count: 2, adjustmentRange: 0.8,
+randomizeProbability: 0.1)` are the **weight count / weight adjust / weight rnd** fields in the
+dashboard's advanced panel, or on the command line:
+
+```bash
+php bin/rotifer run xor --weight-count=2 --weight-adjust=0.8 --weight-randomize=0.1
+```
 
 ## Built-in problems
 
