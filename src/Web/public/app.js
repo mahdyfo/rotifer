@@ -93,6 +93,7 @@ function fillDefaults(name) {
     const d = p.defaults;
     for (const [id, key] of Object.entries(NUM_FIELDS)) $(id).value = d[key];
     for (const [id, key] of Object.entries(BIO_FIELDS)) $(id).checked = d[key];
+    syncBiology();
     $('cfgActivation').value = d.activation;
     $('cfgHiddenLayers').value = d['hidden-layers'] || '';
     syncTopology();
@@ -116,6 +117,24 @@ function syncParallel() {
 function syncTopology() {
     const layered = $('cfgHiddenLayers').value.trim() !== '';
     $('cfgInitHidden').disabled = layered;
+}
+
+// Grey out each biology feature's numeric params when its toggle is off,
+// so switching problems makes the active/inactive state immediately visible.
+function syncBiology() {
+    const trauma = $('bioTrauma').checked;
+    const adaptive = $('bioAdaptive').checked;
+    const learning = $('bioLearning').checked;
+    $('cfgTraumaIntensity').disabled = !trauma;
+    $('cfgTraumaDecay').disabled = !trauma;
+    $('cfgAdaptivePatience').disabled = !adaptive;
+    $('cfgAdaptiveUp').disabled = !adaptive;
+    $('cfgAdaptiveDown').disabled = !adaptive;
+    $('cfgAdaptiveMin').disabled = !adaptive;
+    $('cfgAdaptiveMax').disabled = !adaptive;
+    $('cfgLifetimeSteps').disabled = !learning;
+    $('cfgLifetimeStepSize').disabled = !learning;
+    $('cfgLamarckian').disabled = !learning;
 }
 
 // Turning lifetime learning on while its step count is still 0 would be a no-op,
@@ -1004,6 +1023,7 @@ function restoreControls(c) {
     for (const id in BIO_FIELDS) $(id).checked = c[id];
     syncParallel();
     syncTopology();
+    syncBiology();
 }
 
 // Update only the per-problem badge + delete button, leaving the tuning fields alone.
@@ -1054,7 +1074,9 @@ async function init() {
         // Keep an open Data view in sync with the selected problem.
         if (!$('createPanel').hidden && state.cpMode === 'data') loadDataPanel(name);
     });
-    $('bioLearning').addEventListener('change', () => { syncParallel(); syncLifetime(); });
+    $('bioTrauma').addEventListener('change', syncBiology);
+    $('bioAdaptive').addEventListener('change', syncBiology);
+    $('bioLearning').addEventListener('change', () => { syncParallel(); syncLifetime(); syncBiology(); });
     $('cfgIslands').addEventListener('input', syncParallel);
     $('cfgHiddenLayers').addEventListener('input', syncTopology);
     $('newBtn').addEventListener('click', newProblem);
