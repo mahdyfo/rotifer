@@ -1,0 +1,28 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Rotifer\Cli\Console;
+use Rotifer\Runtime\FastRuntime;
+
+$autoloads = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+foreach ($autoloads as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+// A `run` is the only heavy command; re-exec it once with OPcache JIT on and
+// Xdebug off (load-time settings, so they can't be set from here). No-op when
+// already fast or opted out with ROTIFER_NO_FAST=1 / --no-fast.
+if (($argv[1] ?? '') === 'run') {
+    FastRuntime::accelerate($argv);
+}
+
+$args = array_values(array_filter(array_slice($argv, 1), static fn (string $a): bool => $a !== '--no-fast'));
+exit((new Console())->run($args));

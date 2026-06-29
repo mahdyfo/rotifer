@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotifer - live evolution</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <span class="logo">⬡</span>
+            <h1>Rotifer</h1>
+            <span class="subtitle" id="problem">-</span>
+        </div>
+        <div class="status" id="status">
+            <span class="dot" id="dot"></span><span id="statusText">idle</span>
+        </div>
+    </header>
+
+    <div id="healthBanner" class="health-banner" hidden></div>
+
+    <section class="panel control-panel">
+        <div class="control-row">
+            <label class="field">
+                <span>problem</span>
+                <select id="problemSelect"></select>
+            </label>
+            <span class="pmeta" id="pmeta"></span>
+            <label class="field num" data-tip="Organisms per generation. More = better search, slower."><span>population</span><input id="cfgPopulation" type="number" min="2" step="1"></label>
+            <label class="field num" data-tip="How many generations to evolve for (0 = run until you stop it)."><span>generations</span><input id="cfgGenerations" type="number" min="0" step="1"></label>
+            <label class="field num" data-tip="Separate sub-populations that trade their best."><span>islands</span><input id="cfgIslands" type="number" min="1" step="1"></label>
+            <label class="field num" data-tip="Same seed reproduces the run exactly."><span>seed</span><input id="cfgSeed" type="number" step="1"></label>
+            <label class="chk" data-tip="Evolve each island in its own process (one worker per island). Off = serial, which is fastest for most problems; on only helps when evaluation is heavy (big nets, large datasets, or long episodes). Needs 2+ islands. Disabled with lifetime learning."><input type="checkbox" id="cfgParallel"> parallel</label>
+            <div class="actions">
+                <button id="newBtn" data-tip="Build your own from example rows.">＋ New</button>
+                <button id="viewBtn" data-tip="See / temporarily edit this problem's data.">≣ Data</button>
+                <button id="deleteBtn" class="ghost" hidden data-tip="Delete this custom problem.">🗑</button>
+                <button id="startBtn" class="primary">▶ Start</button>
+                <button id="continueBtn" data-tip="Keep evolving this problem's last run from where it stopped (runs until you press Stop).">⏵ Continue</button>
+                <button id="stopBtn" class="ghost">■ Stop</button>
+            </div>
+        </div>
+        <div class="control-row bio">
+            <span class="bio-label">biology</span>
+            <label class="chk" data-tip="Hardship raises a heritable, fading mutation boost."><input type="checkbox" id="bioTrauma"> trauma</label>
+            <label class="chk" data-tip="Mutate more when stuck, less when improving."><input type="checkbox" id="bioAdaptive"> adaptive&nbsp;mutation</label>
+            <label class="chk" data-tip="Organisms tune their own weights and pass some on. Runs serial."><input type="checkbox" id="bioLearning"> lifetime&nbsp;learning</label>
+        </div>
+        <details class="advanced">
+            <summary>advanced parameters</summary>
+            <div class="control-row adv">
+                <label class="field" data-tip="Neuron activation. Sigmoid/tanh squash to a range; relu/gelu pass positives through."><span>activation</span>
+                    <select id="cfgActivation">
+                        <option value="sigmoid">sigmoid</option>
+                        <option value="relu">relu</option>
+                        <option value="leaky_relu">leaky relu</option>
+                        <option value="tanh">tanh</option>
+                        <option value="threshold">threshold</option>
+                        <option value="gelu">gelu</option>
+                        <option value="softmax">softmax</option>
+                    </select>
+                </label>
+                <label class="field num" data-tip="Chance offspring mix two parents (vs. cloning one)."><span>crossover</span><input id="cfgCrossover" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Chance to nudge a weight."><span>weight&nbsp;mut</span><input id="cfgWeightMut" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Chance to grow a new neuron."><span>add&nbsp;neuron</span><input id="cfgAddNeuron" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Chance to add a connection."><span>add&nbsp;conn</span><input id="cfgAddConn" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Chance to prune a neuron."><span>del&nbsp;neuron</span><input id="cfgDelNeuron" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Chance to prune a connection."><span>del&nbsp;conn</span><input id="cfgDelConn" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Fraction of each island kept as parents each generation."><span>survive</span><input id="cfgSurvive" type="number" min="0.01" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Top organisms copied unchanged into the next generation."><span>elitism</span><input id="cfgElitism" type="number" min="0" step="1"></label>
+                <label class="field" data-tip="Network shape. Empty = dynamic: the topology evolves freely. Or fixed layer sizes like 5,3,5 for a classic 3 layer network (no input→output shortcuts; neuron count frozen)."><span>layers&nbsp;neurons</span><input id="cfgHiddenLayers" type="text" placeholder="dynamic"></label>
+                <label class="field num" data-tip="Hidden neurons each freshly seeded organism starts with (dynamic topology only; ignored when hidden layers are set)."><span>init&nbsp;hidden</span><input id="cfgInitHidden" type="number" min="0" step="1"></label>
+                <label class="field num" data-tip="When scores are basically equal, rank the simpler networks higher. 0 = off (let it grow freely). Higher = stricter tie. 3 means it will tie at 0.001 fitness, 2 means 0.01,..."><span>simplicity</span><input id="cfgSimplicity" type="number" min="0" max="9" step="1"></label>
+                <label class="field num" data-tip="Fraction of fresh random organisms injected each generation (0 = none)."><span>diversity</span><input id="cfgDiversity" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Trade top organisms between islands every N generations (0 = never; needs 2+ islands)."><span>migrate&nbsp;every</span><input id="cfgMigrateEvery" type="number" min="0" step="1"></label>
+                <label class="field num" data-tip="How many top organisms migrate each time."><span>migrate&nbsp;top</span><input id="cfgMigrateTop" type="number" min="1" step="1"></label>
+            </div>
+        </details>
+    </section>
+
+    <section class="panel create-panel" id="createPanel" hidden>
+        <h2 id="cpTitle">New problem <span class="hint">give example inputs and the outputs you expect</span></h2>
+        <div class="control-row">
+            <label class="field"><span>name</span><input id="cpName" type="text" placeholder="my task"></label>
+            <label class="field num"><span>inputs</span><input id="cpInputs" type="number" min="1" max="16" step="1" value="2"></label>
+            <label class="field num"><span>outputs</span><input id="cpOutputs" type="number" min="1" max="16" step="1" value="1"></label>
+            <label class="chk" data-tip="For recall tasks where state must persist across steps."><input type="checkbox" id="cpMemory"> memory&nbsp;(sequence)</label>
+            <div class="actions">
+                <button id="cpRunTemp" data-tip="Run with these rows without saving a permanent problem.">▶ Run once</button>
+                <button id="cpSave" class="primary">Save</button>
+                <button id="cpCancel" class="ghost">Cancel</button>
+            </div>
+        </div>
+        <div class="cp-hint" id="cpHint">Each row is one example. Values work best between 0 and 1. Defaults adapt to your data.</div>
+        <button id="cpAddRowTop" class="cp-addrow">＋ Add row</button>
+        <div class="cp-rows" id="cpRows"></div>
+        <button id="cpAddRowBottom" class="cp-addrow">＋ Add row</button>
+        <div class="cp-error" id="cpError"></div>
+    </section>
+
+    <section class="kpis" id="kpis">
+        <div class="kpi" data-tip="Current / total generations."><label>generation</label><b id="kpiGen">-</b></div>
+        <div class="kpi" data-tip="Best score this generation (problem-specific scale)."><label>best fitness</label><b id="kpiBest">-</b></div>
+        <div class="kpi" data-tip="Best score ever reached, shown next to the match rate: how close the best-ever champion's answers are to what's expected. The match rate tracks the all-time best, so it only climbs - it never dips back."><label>all-time best / match</label><b id="kpiAllTime">-</b></div>
+        <div class="kpi" data-tip="Average score across the population."><label>avg fitness</label><b id="kpiAvg">-</b></div>
+        <div class="kpi" data-tip="Living organisms being scored."><label>population</label><b id="kpiPop">-</b></div>
+        <div class="kpi" data-tip="Time per generation."><label>ms / gen</label><b id="kpiMs">-</b></div>
+        <div class="kpi" data-tip="Total wall-clock time the whole run has taken so far (continues across Continue)."><label>elapsed time</label><b id="kpiElapsed">-</b></div>
+    </section>
+
+    <main>
+        <div class="panel chart-panel">
+            <div class="chart-head">
+                <h2>Fitness over generations</h2>
+                <button id="clearChartBtn" class="small ghost" data-tip="Drop the accumulated chart points to free memory. A live run keeps plotting from here.">Clear</button>
+            </div>
+            <canvas id="chart" width="900" height="320"></canvas>
+            <div class="legend">
+                <span><i class="sw best"></i>best</span>
+                <span><i class="sw avg"></i>average</span>
+                <span><i class="sw all"></i>all-time best</span>
+            </div>
+        </div>
+
+        <div class="panel net-panel">
+            <div class="net-head">
+                <h2>Champion network <span class="hint">hover a connection or neuron for the math</span></h2>
+                <div class="net-stats">
+                    <span data-tip="Hidden neurons in the champion network.">hidden <b id="kpiHidden">-</b></span>
+                    <span data-tip="Hidden layers (depth) the network has formed - emergent for a dynamic topology, fixed for a layered one.">layers <b id="kpiLayers">-</b></span>
+                    <span data-tip="Connections (genes) in the champion network.">genes <b id="kpiGenes">-</b></span>
+                </div>
+            </div>
+            <svg id="network" viewBox="0 0 420 320" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="legend">
+                <span><i class="sw pos"></i>excitatory</span>
+                <span><i class="sw neg"></i>inhibitory</span>
+                <span><i class="sw new"></i>new</span>
+            </div>
+
+            <div class="infer" id="infer" hidden>
+                <h3>Try it <span class="hint">feed an input; neurons light up by how strongly they fire</span></h3>
+                <div class="infer-row">
+                    <div class="infer-inputs" id="inferInputs"></div>
+                    <button id="inferBtn" class="primary small">Run</button>
+                    <button id="inferReset" class="small" hidden data-tip="Clear the network's memory and start the sequence over.">↺ Reset memory</button>
+                    <span class="infer-step" id="inferStep" hidden></span>
+                </div>
+                <div class="infer-out" id="inferOut"></div>
+            </div>
+        </div>
+    </main>
+
+    <section class="panel islands-panel">
+        <h2>Islands <span class="hint">each deme drifts on its own; trauma fades over generations</span></h2>
+        <div class="islands" id="islands"></div>
+    </section>
+
+    <section class="panel results-panel" id="resultsPanel" hidden>
+        <h2>Champion predictions <span class="hint" id="successHint"></span></h2>
+        <div class="results" id="results"></div>
+    </section>
+
+    <div class="edge-tip" id="edgeTip" hidden></div>
+    <script src="/app.js"></script>
+</body>
+</html>

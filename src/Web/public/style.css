@@ -1,0 +1,272 @@
+:root {
+    --bg: #070b10;
+    --panel: #0e151d;
+    --panel-2: #121b25;
+    --ink: #d7e3ea;
+    --muted: #6b7d8c;
+    --line: #1d2a36;
+    --bio: #3ad6a0;      /* bioluminescent green */
+    --bio-dim: #1c7a5c;
+    --cyan: #45c8ff;
+    --violet: #b07bff;
+    --amber: #ffcf6b;
+    --rose: #ff6b81;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background:
+        radial-gradient(1200px 700px at 80% -10%, rgba(58,214,160,0.07), transparent),
+        radial-gradient(900px 600px at -10% 110%, rgba(69,200,255,0.06), transparent),
+        var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 'Inter', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 22px clamp(16px, 4vw, 48px);
+}
+
+header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+}
+.brand { display: flex; align-items: baseline; gap: 12px; }
+.logo { color: var(--bio); font-size: 26px; filter: drop-shadow(0 0 10px rgba(58,214,160,0.6)); }
+h1 { font-size: 22px; margin: 0; letter-spacing: 0.5px; }
+.subtitle { color: var(--cyan); font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.live { background: var(--bio); box-shadow: 0 0 10px var(--bio); animation: pulse 1.6s infinite; }
+.dot.done { background: var(--cyan); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+.kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin-bottom: 18px;
+}
+.kpi {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+}
+.kpi label { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; }
+.kpi b { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 20px; font-weight: 600; }
+.kpi .accent { color: var(--bio); }
+.kpi .frac { color: var(--bio); font-size: 16px; }
+
+main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 16px; }
+.panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px;
+}
+.panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+.panel h2 .hint { text-transform: none; letter-spacing: 0; color: var(--muted); font-weight: 400; opacity: 0.7; margin-left: 8px; }
+canvas, svg { width: 100%; height: auto; display: block; }
+#network { background: radial-gradient(420px 320px at 50% 40%, rgba(58,214,160,0.04), transparent); border-radius: 12px; }
+
+.legend { display: flex; gap: 16px; margin-top: 10px; color: var(--muted); font-size: 12px; }
+.legend .sw { display: inline-block; width: 12px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.sw.best { background: var(--bio); } .sw.avg { background: var(--cyan); } .sw.all { background: var(--amber); }
+.sw.pos { background: var(--bio); } .sw.neg { background: var(--rose); }
+
+.islands-panel { }
+.islands { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.island {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+    position: relative;
+}
+/* No overflow:hidden here - it would clip the hover tooltips. The glow rounds its
+   own corners instead, and the trauma bar clips its own fill. */
+.island .glow { position: absolute; inset: 0; border-radius: 12px; opacity: 0.18; pointer-events: none; }
+.island h3 { margin: 0 0 8px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+.island .big { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 18px; color: var(--bio); }
+.island .row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.bar { height: 4px; border-radius: 3px; background: var(--line); margin-top: 7px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--rose); }
+
+/* control panel */
+.control-panel { margin-bottom: 16px; }
+.control-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
+.control-row.bio { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); align-items: center; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field > span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.field.num input { width: 92px; }
+select, input[type=number] {
+    background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font: 13px 'JetBrains Mono', ui-monospace, monospace;
+}
+/* the topology ("hidden layers") text input in the advanced row */
+.control-row.adv input[type=text] {
+    width: 96px; background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font: 13px 'JetBrains Mono', ui-monospace, monospace;
+}
+.control-row.adv input:disabled { opacity: 0.4; cursor: not-allowed; }
+select:focus, input:focus { outline: none; border-color: var(--bio-dim); }
+.actions { display: flex; gap: 8px; margin-left: auto; }
+button {
+    border: 1px solid var(--line); border-radius: 9px; padding: 9px 16px; cursor: pointer;
+    font: 600 13px 'Inter', sans-serif; color: var(--ink); background: var(--panel-2); transition: 0.15s;
+}
+button.primary { background: linear-gradient(180deg, var(--bio), var(--bio-dim)); color: #04130d; border-color: transparent; }
+button.primary:hover { filter: brightness(1.1); }
+button.ghost:hover { border-color: var(--rose); color: var(--rose); }
+button:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+.bio-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; margin-right: 4px; }
+
+/* advanced parameters (collapsible) */
+.advanced { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.advanced > summary {
+    color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+    cursor: pointer; user-select: none; list-style: none; width: max-content;
+}
+.advanced > summary::-webkit-details-marker { display: none; }
+.advanced > summary::before { content: '▸'; display: inline-block; margin-right: 6px; }
+.advanced[open] > summary::before { content: '▾'; }
+.advanced > summary:hover { color: var(--ink); }
+.control-row.adv { margin-top: 12px; gap: 10px 14px; }
+.control-row.adv .field.num input { width: 72px; }
+.chk { display: flex; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; cursor: pointer; }
+.chk input { accent-color: var(--bio); }
+
+/* network change legend */
+.sw.new { background: var(--cyan); }
+
+/* chart panel: title on the left, Clear button on the right */
+.chart-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.chart-head h2 { margin: 0; }
+
+/* network panel: title on the left, champion size stats on the right */
+.net-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.net-head h2 { margin: 0; }
+.net-stats { display: flex; gap: 14px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; cursor: help; }
+.net-stats b { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: var(--ink); margin-left: 4px; }
+
+/* results table */
+.results-panel { margin-top: 16px; }
+.results table { border-collapse: collapse; width: 100%; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; }
+.results th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+.results td { padding: 6px 14px 6px 0; border-bottom: 1px solid rgba(29,42,54,0.5); }
+.results td:last-child { color: var(--bio); }
+
+/* edge change flashes: pulse a few times, then the next render settles */
+@keyframes flashNew { 0%,100% { opacity: 1; stroke-width: 1; } 50% { opacity: 1; stroke-width: 4; } }
+@keyframes flashChange { 0%,100% { opacity: 0.4; } 50% { opacity: 1; stroke-width: 3.5; } }
+#network path.flash-new { animation: flashNew 0.45s ease-in-out 3; }
+#network path.flash-change { animation: flashChange 0.45s ease-in-out 3; }
+
+/* hover tooltips - self-explanatory UI without clutter */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 50;
+    width: max-content; max-width: 260px;
+    background: #060a0e; color: var(--ink); border: 1px solid var(--bio-dim);
+    border-radius: 8px; padding: 8px 10px; font: 12px/1.45 'Inter', sans-serif;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.55); white-space: normal; pointer-events: none;
+}
+[data-tip]:hover::before {
+    content: ''; position: absolute; left: 14px; bottom: calc(100% + 2px); z-index: 51;
+    border: 6px solid transparent; border-top-color: var(--bio-dim); pointer-events: none;
+}
+.kpi[data-tip] { cursor: help; }
+
+/* problem shape/memory badge next to the selector */
+.pmeta { color: var(--muted); font-size: 12px; font-family: 'JetBrains Mono', ui-monospace, monospace; align-self: flex-end; padding-bottom: 9px; }
+.pmeta .mem { color: var(--violet); }
+
+/* create-problem panel */
+.create-panel { margin-bottom: 16px; }
+.create-panel .cp-hint { color: var(--muted); font-size: 12px; margin: 10px 0; }
+/* the memory checkbox sits in a row of label+input fields; the fields are bottom-
+   aligned, so give it the input box height and bottom-align it too - that centres
+   the checkbox on the inputs beside it, not on the whole label+input column. */
+.create-panel .control-row .chk { align-self: flex-end; height: 35px; }
+.control-panel .control-row:not(.bio) > .chk { align-self: flex-end; height: 35px; }
+/* add-row buttons bracket the rows list (one above, one below) for convenience */
+.cp-addrow { margin: 8px 0; background: var(--panel-2); border-style: dashed; color: var(--muted); }
+.cp-addrow:hover { color: var(--bio); border-color: var(--bio-dim); }
+.create-panel input[type=text] {
+    background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font: 13px 'Inter', sans-serif; width: 160px;
+}
+.cp-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.cp-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cp-row .cp-label { color: var(--muted); font-size: 11px; width: 46px; }
+.cp-row .grp { display: flex; gap: 6px; align-items: center; }
+.cp-row .arrow { color: var(--bio); font-size: 16px; margin: 0 4px; }
+.cp-row input[type=number] { width: 64px; }
+.cp-row .cp-del {
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--muted);
+    border-radius: 7px; width: 28px; height: 28px; padding: 0; cursor: pointer; line-height: 1;
+}
+.cp-row .cp-del:hover { color: var(--rose); border-color: var(--rose); }
+.cp-error { color: var(--rose); font-size: 12px; margin-top: 10px; min-height: 16px; }
+button.small { padding: 7px 12px; }
+
+/* inference ("try it") */
+.infer { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.infer h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.infer-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.infer-inputs { display: flex; gap: 6px; flex-wrap: wrap; }
+.infer-inputs input {
+    width: 56px; background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 8px; font: 13px 'JetBrains Mono', ui-monospace, monospace; text-align: center;
+}
+.infer-out { margin-top: 10px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: var(--muted); min-height: 18px; }
+.infer-out b { color: var(--bio); }
+.infer-out .chip {
+    display: inline-block; padding: 2px 8px; margin: 0 4px 4px 0; border-radius: 6px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+}
+
+/* connection hover: highlight the line + a styled weight tooltip */
+#network path.edge { transition: stroke-width 0.1s ease, opacity 0.1s ease; }
+#network path.edge.hot { opacity: 1 !important; stroke-width: 4.5 !important; filter: drop-shadow(0 0 5px currentColor); }
+#network path.edge-hit { stroke: transparent; cursor: pointer; }
+.edge-tip {
+    position: fixed; z-index: 60; pointer-events: none;
+    background: #060a0e; color: var(--ink); border: 1px solid var(--bio-dim);
+    border-radius: 8px; padding: 6px 9px; font: 12px/1.4 'JetBrains Mono', ui-monospace, monospace;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.55); white-space: nowrap;
+}
+.edge-tip b { color: var(--bio); }
+/* neuron tooltip: how its value was computed (incoming weights -> activation) */
+.edge-tip .math { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--line); color: var(--ink); }
+.edge-tip .math .trow { color: var(--muted); }
+.edge-tip .math .trow b { color: var(--ink); }
+.edge-tip .tdim { color: var(--muted); }
+
+/* success rate next to the predictions heading */
+#successHint.good { color: var(--bio); }
+#successHint.mid { color: var(--amber); }
+#successHint.low { color: var(--rose); }
+
+/* hoverable neurons (same styled tooltip as connections) */
+#network circle { cursor: pointer; }
+#network circle:hover { stroke: #fff; stroke-width: 1.5; }
+
+/* match column: colour by how close the prediction is */
+.results td.m-good { color: var(--bio); }
+.results td.m-mid { color: var(--amber); }
+.results td.m-low { color: var(--rose); }
+.results td:last-child { color: inherit; } /* let the match colour win over the old rule */
+
+/* try-it sequence step counter */
+.infer-step { color: var(--muted); font: 12px 'JetBrains Mono', ui-monospace, monospace; align-self: center; }
+
+/* runtime-health warning banner (OPcache/JIT/Xdebug not optimal) */
+.health-banner {
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    background: rgba(122, 90, 26, 0.18);
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+}
+.health-banner b { color: #ffe1a0; }
+
+@media (max-width: 1100px) {
+    main { grid-template-columns: 1fr; }
+    .actions { margin-left: 0; }
+}

@@ -1,4 +1,6 @@
 /.idea
 /vendor
 /autosave
+/runs
 /.phpunit.result.cache
+/.phpunit.cache

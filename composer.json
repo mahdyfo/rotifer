@@ -1,6 +1,6 @@
 {
     "name": "mahdyfo/rotifer",
-    "description": "A genetic AI framework that evolves its own deep learning architecture (AutoML)",
+    "description": "A genetic AI framework that evolves its own neural network architecture through biologically-inspired neuroevolution (AutoML)",
     "license": "Apache-2.0",
     "keywords": [
         "AI",
@@ -9,11 +9,13 @@
         "deep learning",
         "AutoML",
         "neural networks",
-        "neuroevolution"
+        "neuroevolution",
+        "NEAT"
     ],
     "autoload": {
         "psr-4": {
-            "Rotifer\\": "src/"
+            "Rotifer\\": "src/",
+            "Rotifer\\Problems\\": "problems/"
         }
     },
     "authors": [
@@ -23,7 +25,8 @@
         }
     ],
     "require": {
-        "php": ">=8.0.0"
+        "php": ">=8.2",
+        "amphp/parallel": "^2.4"
     },
     "require-dev": {
         "psy/psysh": "^0.12.2",
@@ -33,5 +36,14 @@
         "psr-4": {
             "Rotifer\\Tests\\": "tests/"
         }
+    },
+    "bin": [
+        "bin/rotifer"
+    ],
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite Unit",
+        "test:integration": "phpunit --testsuite Integration",
+        "test:functional": "phpunit --testsuite Functional"
     }
 }
