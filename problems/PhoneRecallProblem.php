@@ -80,12 +80,12 @@ final class PhoneRecallProblem implements Problem, Predictable
             $predicted = round($best->outputs()[0], 4);
             $ok = round($predicted) == $digit;
             $correct += $ok ? 1 : 0;
-            $rows[] = [(string) $step, (string) $digit, (string) $predicted, $ok ? 'ok' : '-'];
+            $rows[] = [(string) $step, 1, (string) $digit, (string) $predicted, $ok ? 'ok' : '-'];
         }
 
         $total = count($rows);
         return [
-            'columns' => ['step', 'expected', 'predicted', 'ok'],
+            'columns' => ['step', 'input', 'expected', 'predicted', 'ok'],
             'rows' => $rows,
             'successRate' => $total > 0 ? $correct / $total : 0.0,
         ];
