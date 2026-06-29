@@ -8,8 +8,7 @@ Pure PHP. Watch it evolve live in your terminal **or** in a browser dashboard. R
 
 ```bash
 composer install
-php bin/rotifer run xor          # evolve XOR live in the terminal
-php bin/rotifer list             # see all built-in problems
+php bin/rotifer serve            # start dashboard
 ```
 
 ![Rotifer browser dashboard — weather_forecast at generation 500, 99% match](docs/screenshot.jpg)
