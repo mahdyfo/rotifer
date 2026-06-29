@@ -8,7 +8,7 @@ Pure PHP. Watch it evolve live in your terminal **or** in a browser dashboard. R
 
 ```bash
 composer install
-php bin/rotifer serve            # start dashboard
+php bin/rotifer serve            # start dashboard http://localhost:8080
 ```
 
 ![Rotifer browser dashboard — weather_forecast at generation 500, 99% match](docs/screenshot.jpg)
