@@ -6,6 +6,7 @@ namespace Rotifer\Web;
 
 use Rotifer\Persistence\SnapshotStore;
 use Rotifer\Runtime\FastRuntime;
+use Rotifer\Runtime\RunOptions;
 
 /**
  * Lets the dashboard launch and stop evolution runs. It shells out to the same
@@ -18,9 +19,6 @@ use Rotifer\Runtime\FastRuntime;
  */
 final class RunManager
 {
-    private const NUMERIC = ['seed', 'population', 'generations', 'islands', 'elitism', 'initial-hidden', 'migration-every', 'migration-top', 'simplicity'];
-    private const FLOAT = ['crossover', 'weight-mutation', 'add-neuron', 'add-connection', 'remove-neuron', 'remove-connection', 'survive-rate', 'diversity'];
-    private const BOOLEAN = ['trauma', 'adaptive-mutation', 'lifetime-learning'];
     private const ACTIVATIONS = ['sigmoid', 'relu', 'leaky_relu', 'tanh', 'threshold', 'gelu', 'softmax'];
 
     private readonly string $controlFile;
@@ -46,30 +44,28 @@ final class RunManager
 
         $rotifer = $this->projectRoot . '/bin/rotifer';
         $args = ['run', $problem, '--web', '--quiet'];
-        foreach (self::NUMERIC as $key) {
-            if (isset($overrides[$key]) && is_numeric($overrides[$key])) {
-                $args[] = '--' . $key . '=' . (int) $overrides[$key];
+        // Whitelist strictly against the shared RunOptions schema: numbers are cast,
+        // bools normalised, and the two string knobs validated against a fixed set /
+        // a tight pattern - so no arbitrary string ever reaches the shell (args are
+        // escaped below too). Iterating the schema is what keeps the dashboard able
+        // to set exactly the same knobs as the CLI.
+        foreach (RunOptions::TYPES as $key => $type) {
+            if (!array_key_exists($key, $overrides)) {
+                continue;
             }
-        }
-        foreach (self::FLOAT as $key) {
-            if (isset($overrides[$key]) && is_numeric($overrides[$key])) {
-                $args[] = '--' . $key . '=' . (float) $overrides[$key];
+            $value = $overrides[$key];
+            $flag = match (true) {
+                $type === 'int' && is_numeric($value) => '--' . $key . '=' . (int) $value,
+                $type === 'float' && is_numeric($value) => '--' . $key . '=' . (float) $value,
+                $type === 'bool' => '--' . $key . '=' . ($this->truthy($value) ? '1' : '0'),
+                $key === 'activation' && in_array($value, self::ACTIVATIONS, true) => '--activation=' . $value,
+                // Hidden layers: only digits, commas and spaces ("5,3,5" or empty for dynamic).
+                $key === 'hidden-layers' && is_string($value) && preg_match('/^[0-9, ]*$/', $value) => '--hidden-layers=' . $value,
+                default => null,
+            };
+            if ($flag !== null) {
+                $args[] = $flag;
             }
-        }
-        foreach (self::BOOLEAN as $key) {
-            if (array_key_exists($key, $overrides)) {
-                $args[] = '--' . $key . '=' . ($this->truthy($overrides[$key]) ? '1' : '0');
-            }
-        }
-        // Activation is a string from a fixed set (it reaches the shell, so whitelist it).
-        if (isset($overrides['activation']) && in_array($overrides['activation'], self::ACTIVATIONS, true)) {
-            $args[] = '--activation=' . $overrides['activation'];
-        }
-        // Hidden layers: a comma-separated list of sizes ("5,3,5") or empty for dynamic.
-        // Only digits, commas and spaces reach the shell, and it is escaped below.
-        if (isset($overrides['hidden-layers']) && is_string($overrides['hidden-layers'])
-            && preg_match('/^[0-9, ]*$/', $overrides['hidden-layers'])) {
-            $args[] = '--hidden-layers=' . $overrides['hidden-layers'];
         }
         // Parallel only when 2+ workers are asked for; 0/1 stays serial.
         if (isset($overrides['parallel']) && (int) $overrides['parallel'] >= 2) {

@@ -63,6 +63,9 @@
                 </label>
                 <label class="field num" data-tip="Chance offspring mix two parents (vs. cloning one)."><span>crossover</span><input id="cfgCrossover" type="number" min="0" max="1" step="0.01"></label>
                 <label class="field num" data-tip="Chance to nudge a weight."><span>weight&nbsp;mut</span><input id="cfgWeightMut" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="How many weights are nudged each time a weight mutation happens."><span>weight&nbsp;count</span><input id="cfgWeightCount" type="number" min="1" step="1"></label>
+                <label class="field num" data-tip="Largest a single weight nudge can be (± this, scaled). Bigger = coarser search."><span>weight&nbsp;adjust</span><input id="cfgWeightAdjust" type="number" min="0" step="0.05"></label>
+                <label class="field num" data-tip="Chance a nudged weight is replaced with a fresh random value instead of being nudged."><span>weight&nbsp;rnd</span><input id="cfgWeightRandomize" type="number" min="0" max="1" step="0.05"></label>
                 <label class="field num" data-tip="Chance to grow a new neuron."><span>add&nbsp;neuron</span><input id="cfgAddNeuron" type="number" min="0" max="1" step="0.01"></label>
                 <label class="field num" data-tip="Chance to add a connection."><span>add&nbsp;conn</span><input id="cfgAddConn" type="number" min="0" max="1" step="0.01"></label>
                 <label class="field num" data-tip="Chance to prune a neuron."><span>del&nbsp;neuron</span><input id="cfgDelNeuron" type="number" min="0" max="1" step="0.01"></label>
@@ -75,6 +78,24 @@
                 <label class="field num" data-tip="Fraction of fresh random organisms injected each generation (0 = none)."><span>diversity</span><input id="cfgDiversity" type="number" min="0" max="1" step="0.01"></label>
                 <label class="field num" data-tip="Trade top organisms between islands every N generations (0 = never; needs 2+ islands)."><span>migrate&nbsp;every</span><input id="cfgMigrateEvery" type="number" min="0" step="1"></label>
                 <label class="field num" data-tip="How many top organisms migrate each time."><span>migrate&nbsp;top</span><input id="cfgMigrateTop" type="number" min="1" step="1"></label>
+            </div>
+        </details>
+        <details class="advanced">
+            <summary>biology parameters</summary>
+            <div class="control-row adv">
+                <span class="bio-label">trauma</span>
+                <label class="field num" data-tip="Stress boost applied on hardship - higher = a bigger mutation kick after a bad generation (0-1). Only used when trauma is on."><span>intensity</span><input id="cfgTraumaIntensity" type="number" min="0" max="1" step="0.05"></label>
+                <label class="field num" data-tip="How fast inherited stress fades each generation (0-1). Higher = forgets faster."><span>decay</span><input id="cfgTraumaDecay" type="number" min="0" max="1" step="0.05"></label>
+                <span class="bio-label">adaptive</span>
+                <label class="field num" data-tip="Generations without improvement before mutation ramps up. Only used when adaptive mutation is on."><span>patience</span><input id="cfgAdaptivePatience" type="number" min="1" step="1"></label>
+                <label class="field num" data-tip="Multiply the mutation scale by this when stuck (greater than 1 = explore harder)."><span>up&nbsp;×</span><input id="cfgAdaptiveUp" type="number" min="1" step="0.05"></label>
+                <label class="field num" data-tip="Multiply the mutation scale by this when improving (less than 1 = settle down)."><span>down&nbsp;×</span><input id="cfgAdaptiveDown" type="number" min="0" max="1" step="0.01"></label>
+                <label class="field num" data-tip="Lowest the mutation scale is allowed to drop to."><span>min&nbsp;scale</span><input id="cfgAdaptiveMin" type="number" min="0" step="0.05"></label>
+                <label class="field num" data-tip="Highest the mutation scale is allowed to climb to."><span>max&nbsp;scale</span><input id="cfgAdaptiveMax" type="number" min="0" step="0.5"></label>
+                <span class="bio-label">lifetime</span>
+                <label class="field num" data-tip="Weight-tuning steps each organism takes during its own lifetime, per evaluation (0 = none). Only used when lifetime learning is on."><span>steps</span><input id="cfgLifetimeSteps" type="number" min="0" step="1"></label>
+                <label class="field num" data-tip="Size of each lifetime-learning weight step."><span>step&nbsp;size</span><input id="cfgLifetimeStepSize" type="number" min="0" max="1" step="0.05"></label>
+                <label class="field num" data-tip="Fraction of what an organism learns that is written back into its genome and inherited (Lamarckian, 0-1). 0 = Baldwin only (learning helps scores but isn't inherited)."><span>lamarckian</span><input id="cfgLamarckian" type="number" min="0" max="1" step="0.05"></label>
             </div>
         </details>
     </section>

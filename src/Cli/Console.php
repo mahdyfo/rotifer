@@ -7,7 +7,6 @@ namespace Rotifer\Cli;
 use Throwable;
 use Rotifer\Evolution\ParallelWorld;
 use Rotifer\Evolution\World;
-use Rotifer\Network\Activation\ActivationFactory;
 use Rotifer\Observe\EventDispatcher;
 use Rotifer\Observe\Reporter\ConsoleReporter;
 use Rotifer\Observe\Reporter\JsonStreamReporter;
@@ -16,6 +15,7 @@ use Rotifer\Persistence\Codec\HexCodec;
 use Rotifer\Persistence\SnapshotStore;
 use Rotifer\Runtime\EvolutionConfig;
 use Rotifer\Runtime\FastRuntime;
+use Rotifer\Runtime\RunOptions;
 use Rotifer\Runtime\Fitness\Problem;
 
 /**
@@ -160,86 +160,16 @@ final class Console
         return true;
     }
 
-    /** @param array<string, string|bool> $options */
+    /**
+     * Fold the CLI flags into the problem's config. Every knob is mapped in one
+     * place - {@see RunOptions}, which the dashboard shares - so the command line
+     * and the web stay at parity.
+     *
+     * @param array<string, string|bool> $options
+     */
     private function applyOverrides(EvolutionConfig $config, array $options): EvolutionConfig
     {
-        if (isset($options['seed'])) {
-            $config = $config->seed((int) $options['seed']);
-        }
-        if (isset($options['population'])) {
-            $config = $config->population((int) $options['population']);
-        }
-        if (isset($options['generations'])) {
-            $config = $config->generations((int) $options['generations']);
-        }
-        if (isset($options['islands'])) {
-            $config = $config->islands((int) $options['islands']);
-        }
-
-        // Biology toggles (so the dashboard / CLI can flip mechanisms on or off).
-        if (array_key_exists('trauma', $options)) {
-            $config = $config->trauma($this->boolOpt($options['trauma']));
-        }
-        if (array_key_exists('adaptive-mutation', $options)) {
-            $config = $config->adaptiveMutation($this->boolOpt($options['adaptive-mutation']));
-        }
-        if (array_key_exists('lifetime-learning', $options)) {
-            $config = $this->boolOpt($options['lifetime-learning'])
-                ? $config->lifetimeLearning(steps: 5, lamarckian: 0.3)
-                : $config->lifetimeLearning(steps: 0, enabled: false);
-        }
-
-        // Advanced overrides: activation, reproduction probabilities, structure,
-        // and migration. Each only applies when the flag is present.
-        if (isset($options['activation'])) {
-            $config = $config->activation(ActivationFactory::fromName((string) $options['activation']));
-        }
-        if (isset($options['crossover'])) {
-            $config = $config->crossover((float) $options['crossover']);
-        }
-        $config = $config->mutation(
-            weight: isset($options['weight-mutation']) ? (float) $options['weight-mutation'] : null,
-            addNeuron: isset($options['add-neuron']) ? (float) $options['add-neuron'] : null,
-            addConnection: isset($options['add-connection']) ? (float) $options['add-connection'] : null,
-            removeNeuron: isset($options['remove-neuron']) ? (float) $options['remove-neuron'] : null,
-            removeConnection: isset($options['remove-connection']) ? (float) $options['remove-connection'] : null,
-        );
-        if (isset($options['survive-rate'])) {
-            $config = $config->surviveRate((float) $options['survive-rate']);
-        }
-        if (isset($options['elitism'])) {
-            $config = $config->elitism((int) $options['elitism']);
-        }
-        if (isset($options['initial-hidden'])) {
-            $config = $config->initialHidden((int) $options['initial-hidden']);
-        }
-        if (isset($options['simplicity'])) {
-            $config = $config->simplicity((int) $options['simplicity']);
-        }
-        // Topology: "5,3,5" pins a fixed layered network; an empty value (or "dynamic")
-        // forces the evolving topology, overriding whatever the problem configured.
-        if (isset($options['hidden-layers']) && is_string($options['hidden-layers'])) {
-            $sizes = array_values(array_filter(
-                array_map('intval', explode(',', $options['hidden-layers'])),
-                static fn (int $n) => $n > 0,
-            ));
-            $config = $config->hiddenLayers($sizes);
-        }
-        if (isset($options['diversity'])) {
-            $config = $config->diversityInjection((float) $options['diversity']);
-        }
-        if (isset($options['migration-every'])) {
-            $config = $config->migration((int) $options['migration-every'], (int) ($options['migration-top'] ?? 1));
-        }
-        return $config;
-    }
-
-    private function boolOpt(string|bool $value): bool
-    {
-        if ($value === true) {
-            return true; // bare flag, e.g. --trauma
-        }
-        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        return RunOptions::applyTo($config, $options);
     }
 
     /**
@@ -318,7 +248,10 @@ final class Console
               rotifer help                      Show this help
 
             Run options (a problem's own config() is the baseline; these override it;
-            shown in [] is the framework default from EvolutionConfig::default()):
+            shown in [] is the framework default from EvolutionConfig::default()).
+            Every option below is also settable from the dashboard's control panel.
+
+            Core:
               --seed=N           Random seed - same seed reproduces a run exactly   [1]
               --population=N     Population size                                     [150]
               --generations=N    Generations to run (0 = unbounded)                  [50]
@@ -326,7 +259,47 @@ final class Console
               --parallel[=N]     Evolve each island in its own worker process (one
                                  per island; scales when evaluation is heavy)        [off]
               --web              Stream the run to runs/<name>/ for the dashboard    [off]
+              --resume           Continue from the saved checkpoint                  [off]
               --quiet            Suppress the live dashboard                         [off]
+
+            Structure / selection:
+              --survive-rate=F   Fraction of each island kept as parents            [0.5]
+              --elitism=N        Top organisms copied unchanged into the next gen   [1]
+              --diversity=F      Fraction of fresh random organisms injected/gen     [0.0]
+              --initial-hidden=N Hidden neurons a freshly seeded organism starts     [1]
+              --hidden-layers=L  Fixed layered MLP, e.g. 5,3,5 (empty = dynamic)     [dynamic]
+              --simplicity=N     Sig-figs of fitness tied so simpler nets win (0=off) [3]
+              --activation=NAME  sigmoid|relu|leaky_relu|tanh|threshold|gelu|softmax [sigmoid]
+
+            Reproduction:
+              --crossover=F          Chance offspring mix two parents               [0.5]
+              --weight-mutation=F    Chance to nudge weights                        [0.4]
+              --weight-count=N       Weights nudged per mutation                    [1]
+              --weight-adjust=F      Max size of a weight nudge                     [0.5]
+              --weight-randomize=F   Chance a nudge fully randomises the weight     [0.1]
+              --add-neuron=F         Chance to grow a neuron                        [0.03]
+              --add-connection=F     Chance to add a connection                     [0.05]
+              --remove-neuron=F      Chance to prune a neuron                       [0.02]
+              --remove-connection=F  Chance to prune a connection                   [0.03]
+
+            Biology (each mechanism off by default; a bare toggle uses sensible values):
+              --trauma[=0|1]            Heritable, decaying stress boost
+              --trauma-intensity=F     Stress applied on hardship                   [0.4]
+              --trauma-decay=F         How fast inherited stress fades              [0.5]
+              --adaptive-mutation[=0|1] Mutate more when stuck, less when improving
+              --adaptive-patience=N    Stalled gens before ramping up              [6]
+              --adaptive-up=F          Scale-up factor when stuck                   [1.5]
+              --adaptive-down=F        Scale-down factor when improving             [0.95]
+              --adaptive-min=F         Lowest mutation scale                        [0.25]
+              --adaptive-max=F         Highest mutation scale                       [4.0]
+              --lifetime-learning[=0|1] Within-life weight tuning (runs serial)
+              --lifetime-steps=N       Tuning steps per evaluation                  [5 when on]
+              --lifetime-step-size=F   Size of each tuning step                     [0.3]
+              --lamarckian=F           Fraction of learning written back (inherited) [0.3 when on]
+
+            Migration (needs 2+ islands):
+              --migration-every=N    Trade top organisms every N generations (0=never) [0]
+              --migration-top=N      How many top organisms migrate each time        [1]
 
             Live dashboard (one persistent server, all runs):
               Terminal 1:  php bin/rotifer serve              then open http://localhost:8080

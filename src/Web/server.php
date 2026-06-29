@@ -88,33 +88,10 @@ function listProblems(ProblemRegistry $registry): array
             'inputs' => $problem->shape()->inputs,
             'outputs' => $problem->shape()->outputs,
             'memory' => $c->hasMemory(),
-            'defaults' => [
-                'population' => $c->getPopulation(),
-                'generations' => $c->getGenerations(),
-                'islands' => $c->getIslands(),
-                'seed' => $c->getSeed(),
-                'trauma' => $c->isTraumaEnabled(),
-                'adaptive-mutation' => $c->isAdaptiveMutationEnabled(),
-                'lifetime-learning' => $c->isLifetimeLearningEnabled(),
-                // Advanced knobs (the dashboard's "advanced parameters" panel).
-                'activation' => $c->getActivation()->name(),
-                'crossover' => $c->getCrossoverProbability(),
-                'weight-mutation' => $c->getWeightMutationProbability(),
-                'add-neuron' => $c->getAddNeuronProbability(),
-                'add-connection' => $c->getAddConnectionProbability(),
-                'remove-neuron' => $c->getRemoveNeuronProbability(),
-                'remove-connection' => $c->getRemoveConnectionProbability(),
-                'survive-rate' => $c->getSurviveRate(),
-                'elitism' => $c->getElitism(),
-                'initial-hidden' => $c->getInitialHidden(),
-                // Fixed layered topology as "5,3,5", or "" for dynamic (evolving) topology.
-                'hidden-layers' => implode(',', $c->getHiddenLayers()),
-                // Sig-figs of fitness treated as equal so simpler nets win on ties; 0 = off.
-                'simplicity' => $c->getSimplicity(),
-                'diversity' => $c->getDiversityInjection(),
-                'migration-every' => $c->getMigrationEveryGenerations(),
-                'migration-top' => $c->getMigrationTopK(),
-                // Whether the problem prefers a parallel run (pre-checks the UI's box).
+            // Every settable knob, keyed exactly like the CLI flags and the /api/start
+            // overrides (RunOptions is the shared source of truth), plus `parallel`,
+            // which the UI shows as a pre-checked box rather than a value field.
+            'defaults' => \Rotifer\Runtime\RunOptions::defaultsOf($c) + [
                 'parallel' => $c->isParallelEnabled(),
             ],
         ];

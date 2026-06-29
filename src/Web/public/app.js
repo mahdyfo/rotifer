@@ -57,6 +57,13 @@ const NUM_FIELDS = {
     cfgSurvive: 'survive-rate', cfgElitism: 'elitism', cfgInitHidden: 'initial-hidden',
     cfgDiversity: 'diversity', cfgMigrateEvery: 'migration-every', cfgMigrateTop: 'migration-top',
     cfgSimplicity: 'simplicity',
+    // weight-mutation mechanics
+    cfgWeightCount: 'weight-count', cfgWeightAdjust: 'weight-adjust', cfgWeightRandomize: 'weight-randomize',
+    // biology parameters (the toggles themselves live in BIO_FIELDS)
+    cfgTraumaIntensity: 'trauma-intensity', cfgTraumaDecay: 'trauma-decay',
+    cfgAdaptivePatience: 'adaptive-patience', cfgAdaptiveUp: 'adaptive-up', cfgAdaptiveDown: 'adaptive-down',
+    cfgAdaptiveMin: 'adaptive-min', cfgAdaptiveMax: 'adaptive-max',
+    cfgLifetimeSteps: 'lifetime-steps', cfgLifetimeStepSize: 'lifetime-step-size', cfgLamarckian: 'lamarckian',
 };
 const BIO_FIELDS = {
     bioTrauma: 'trauma', bioAdaptive: 'adaptive-mutation', bioLearning: 'lifetime-learning',
@@ -108,6 +115,14 @@ function syncParallel() {
 function syncTopology() {
     const layered = $('cfgHiddenLayers').value.trim() !== '';
     $('cfgInitHidden').disabled = layered;
+}
+
+// Turning lifetime learning on while its step count is still 0 would be a no-op,
+// so seed the established default - the user can still tune it down afterwards.
+function syncLifetime() {
+    if ($('bioLearning').checked && (+$('cfgLifetimeSteps').value || 0) <= 0) {
+        $('cfgLifetimeSteps').value = 5;
+    }
 }
 
 async function startRun(resume = false) {
@@ -1034,7 +1049,7 @@ async function init() {
         // Keep an open Data view in sync with the selected problem.
         if (!$('createPanel').hidden && state.cpMode === 'data') loadDataPanel(name);
     });
-    $('bioLearning').addEventListener('change', syncParallel);
+    $('bioLearning').addEventListener('change', () => { syncParallel(); syncLifetime(); });
     $('cfgIslands').addEventListener('input', syncParallel);
     $('cfgHiddenLayers').addEventListener('input', syncTopology);
     $('newBtn').addEventListener('click', newProblem);
