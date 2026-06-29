@@ -12,6 +12,8 @@ php bin/rotifer run xor          # evolve XOR live in the terminal
 php bin/rotifer list             # see all built-in problems
 ```
 
+![Rotifer browser dashboard — weather_forecast at generation 500, 99% match](docs/screenshot.jpg)
+
 ---
 
 ## Why it's different
@@ -32,6 +34,10 @@ php bin/rotifer list             # see all built-in problems
 - **One seeded RNG tree.** Every random choice flows through a seedable `Rng`; the master seed derives an independent stream per island. **Same seed ⇒ identical run**, which makes evolution testable and parallel-safe. (`src/Runtime/Rng.php`)
 - **Events, not print statements.** The engine emits events; *reporters* render them - a terminal dashboard, a JSON stream for the web UI, or nothing at all. (`src/Observe/`)
 
+Topology is dynamic by default: hidden neurons are sorted by index and edges flow low→high, so a chain of hidden neurons naturally forms multiple layers - but the same set of neurons can equally well form a single layer with intra-connections, depending on what evolution finds useful.
+
+![Dynamic topology: the same neurons can form multi-layer or single-layer-with-intra-connections depending on how evolution wires them](docs/neural_layerings.jpg)
+
 ## The biology
 
 Every mechanism is independently switchable in a problem's config; turned off, it's a no-op.
@@ -51,30 +57,12 @@ composer install
 
 Pure PHP - all you need is PHP ≥ 8.2 and Composer.
 
-### 2. Evolve a problem in the terminal
-
-```bash
-php bin/rotifer list                # see the built-in problems
-php bin/rotifer run xor             # evolve XOR with a live terminal dashboard
-```
-
-You'll watch fitness climb generation by generation; when it stops (or you press Ctrl+C) it prints
-the champion's predictions, a success rate, and the best genome as hex. A few variations:
-
-```bash
-php bin/rotifer run xor --seed=42 --quiet        # reproducible, no live output
-php bin/rotifer run weather_forecast             # multi-class classification
-php bin/rotifer run flappy_bird                  # a game, learned with no training data
-php bin/rotifer run auto_encoder --parallel=8    # evaluate across 8 worker processes
-php bin/rotifer help                             # the full, annotated option list
-```
-
-### 3. Use the browser dashboard
+### 2. Use the browser dashboard
 
 One persistent server drives every run, so you never need a separate port per experiment.
 
 ```bash
-php bin/rotifer serve               # then open http://localhost:8080
+php bin/rotifer serve   # then open http://localhost:8080
 ```
 
 From the page you can:
@@ -96,6 +84,24 @@ Prefer to keep launching from the terminal but still watch in the browser? Run t
 ```bash
 php bin/rotifer serve                       # terminal 1 - the dashboard
 php bin/rotifer run flappy_bird --web       # terminal 2 - streams this run to the page
+```
+
+### 3. Evolve a problem in the terminal
+
+```bash
+php bin/rotifer list                # see the built-in problems
+php bin/rotifer run xor             # evolve XOR with a live terminal dashboard
+```
+
+You'll watch fitness climb generation by generation; when it stops (or you press Ctrl+C) it prints
+the champion's predictions, a success rate, and the best genome as hex. A few variations:
+
+```bash
+php bin/rotifer run xor --seed=42 --quiet        # reproducible, no live output
+php bin/rotifer run weather_forecast             # multi-class classification
+php bin/rotifer run flappy_bird                  # a game, learned with no training data
+php bin/rotifer run auto_encoder --parallel=8    # evaluate across 8 worker processes
+php bin/rotifer help                             # the full, annotated option list
 ```
 
 ### 4. Every option, both ways
