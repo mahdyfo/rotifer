@@ -100,6 +100,7 @@ function fillDefaults(name) {
     $('cfgParallel').checked = !!d.parallel;
     $('deleteBtn').hidden = !p.custom;
     $('pmeta').innerHTML = `${p.inputs} in → ${p.outputs} out${p.memory ? ' · <span class="mem">memory</span>' : ''}`;
+    $('problemDesc').textContent = p.description || '';
     syncParallel();
 }
 
@@ -856,6 +857,7 @@ function newProblem() {
     $('cpInputs').value = 2;
     $('cpOutputs').value = 1;
     $('cpMemory').checked = false;
+    $('cpDescription').value = '';
     $('cpTitle').innerHTML = 'New problem <span class="hint">give example inputs and the outputs you expect</span>';
     $('cpHint').textContent = 'Each row is one example. Values work best between 0 and 1. Defaults adapt to your data.';
     $('cpRunTemp').hidden = false; // New can run its rows once without saving
@@ -893,6 +895,7 @@ async function loadDataPanel(name) {
     $('cpInputs').value = d.inputs;
     $('cpOutputs').value = d.outputs;
     $('cpMemory').checked = d.memory;
+    $('cpDescription').value = d.description || '';
     $('cpTitle').innerHTML = `Edit '${esc(d.name)}' <span class="hint">saves a separate custom copy; the original is untouched</span>`;
     $('cpRunTemp').hidden = true; // the Data view edits/saves; it does not run
     $('cpError').textContent = '';
@@ -965,6 +968,7 @@ async function cpSave(runAfter) {
         name: $('cpName').value,
         inputs, outputs,
         memory: $('cpMemory').checked,
+        description: $('cpDescription').value,
         rows: state.cpRows.map((r) => ({ input: r.input.map(Number), output: r.output.map(Number) })),
     };
     let res;
@@ -1008,6 +1012,7 @@ function markSelected(name) {
     if (!p) return;
     $('deleteBtn').hidden = !p.custom;
     $('pmeta').innerHTML = `${p.inputs} in → ${p.outputs} out${p.memory ? ' · <span class="mem">memory</span>' : ''}`;
+    $('problemDesc').textContent = p.description || '';
 }
 
 async function deleteProblem() {

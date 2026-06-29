@@ -8,6 +8,7 @@ use Rotifer\Network\Activation\Sigmoid;
 use Rotifer\Network\Shape;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Problem;
 
 /**
@@ -16,8 +17,13 @@ use Rotifer\Runtime\Fitness\Problem;
  * highest. Fitness rewards a correct argmax plus low error, so a perfect
  * classifier approaches two points per row.
  */
-final class WeatherForecastProblem implements Problem
+final class WeatherForecastProblem implements Problem, Describable
 {
+    public function description(): string
+    {
+        return 'Multi-class classification: map weather readings to one of four conditions via an argmax over four outputs.';
+    }
+
     /** sunny, cloudy, rainy, stormy */
     private const CLASSES = 4;
 

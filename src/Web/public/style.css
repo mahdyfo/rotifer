@@ -173,6 +173,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
 .pmeta { color: var(--muted); font-size: 12px; font-family: 'JetBrains Mono', ui-monospace, monospace; align-self: flex-end; padding-bottom: 9px; }
 .pmeta .mem { color: var(--violet); }
 
+/* one-line description of the selected problem, under the control row */
+.problem-desc { color: var(--muted); font-size: 12.5px; line-height: 1.4; margin: 10px 0 0; max-width: 150ch; }
+.problem-desc:empty { display: none; }
+/* "optional" tag on the create form's description label (lowercase, unlike the field caps) */
+.field .opt { text-transform: none; letter-spacing: 0; opacity: 0.6; margin-left: 4px; }
+.create-panel .cp-desc-field input[type=text] { width: 460px; max-width: 100%; }
+
 /* create-problem panel */
 .create-panel { margin-bottom: 16px; }
 .create-panel .cp-hint { color: var(--muted); font-size: 12px; margin: 10px 0; }

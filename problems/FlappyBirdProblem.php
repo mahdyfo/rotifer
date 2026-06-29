@@ -8,6 +8,7 @@ use Rotifer\Network\Activation\Sigmoid;
 use Rotifer\Network\Shape;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Predictable;
 use Rotifer\Runtime\Fitness\Problem;
 
@@ -18,8 +19,13 @@ use Rotifer\Runtime\Fitness\Problem;
  * tick. Every bird flies the same deterministic course, making fitness a fair
  * comparison. Strategy is fully emergent.
  */
-final class FlappyBirdProblem implements Problem, Predictable
+final class FlappyBirdProblem implements Problem, Predictable, Describable
 {
+    public function description(): string
+    {
+        return 'A game with no training data - the network flies a bird through pipes and is scored on how far it gets.';
+    }
+
     private const HEIGHT = 20.0;
     private const GRAVITY = 0.5;
     private const FLAP = -2.2;

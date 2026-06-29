@@ -8,6 +8,7 @@ use Rotifer\Network\Activation\Sigmoid;
 use Rotifer\Network\Shape;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Problem;
 
 /**
@@ -16,8 +17,13 @@ use Rotifer\Runtime\Fitness\Problem;
  * for memory-enabled networks - the showcase for recurrence. Perfect score
  * equals the number of scored steps.
  */
-final class MemoryRecallProblem implements Problem
+final class MemoryRecallProblem implements Problem, Describable
 {
+    public function description(): string
+    {
+        return 'Output the signal seen on the previous step - a one-step delay line that needs evolved recurrence.';
+    }
+
     /** The driving signal sequence (read alongside a constant bias). */
     private const SIGNAL = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0];
 

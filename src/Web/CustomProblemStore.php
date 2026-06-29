@@ -14,6 +14,7 @@ final class CustomProblemStore
 {
     private const MAX_IO = 64;
     private const MAX_ROWS = 500;
+    private const MAX_DESCRIPTION = 200;
 
     private readonly string $dir;
 
@@ -72,6 +73,10 @@ final class CustomProblemStore
             'memory' => (bool) ($payload['memory'] ?? false),
             'rows' => $rows,
         ];
+        $description = trim((string) ($payload['description'] ?? ''));
+        if ($description !== '') {
+            $definition['description'] = mb_substr($description, 0, self::MAX_DESCRIPTION);
+        }
         foreach (['population', 'generations', 'islands', 'seed'] as $key) {
             if (isset($payload[$key]) && is_numeric($payload[$key])) {
                 $definition[$key] = (int) $payload[$key];

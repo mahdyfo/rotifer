@@ -41,6 +41,7 @@
                 <button id="stopBtn" class="ghost">■ Stop</button>
             </div>
         </div>
+        <p class="problem-desc" id="problemDesc"></p>
         <div class="control-row bio">
             <span class="bio-label">biology</span>
             <label class="chk" data-tip="Hardship raises a heritable, fading mutation boost."><input type="checkbox" id="bioTrauma"> trauma</label>
@@ -112,6 +113,9 @@
                 <button id="cpSave" class="primary">Save</button>
                 <button id="cpCancel" class="ghost">Cancel</button>
             </div>
+        </div>
+        <div class="control-row">
+            <label class="field cp-desc-field"><span>description <span class="opt">optional</span></span><input id="cpDescription" type="text" placeholder="one-line summary shown beside the problem"></label>
         </div>
         <div class="cp-hint" id="cpHint">Each row is one example. Values work best between 0 and 1. Defaults adapt to your data.</div>
         <button id="cpAddRowTop" class="cp-addrow">＋ Add row</button>

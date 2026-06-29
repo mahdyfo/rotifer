@@ -85,6 +85,7 @@ function listProblems(ProblemRegistry $registry): array
         $out[] = [
             'name' => $problem->name(),
             'custom' => $entry['custom'] ?? false,
+            'description' => $problem instanceof \Rotifer\Runtime\Fitness\Describable ? $problem->description() : '',
             'inputs' => $problem->shape()->inputs,
             'outputs' => $problem->shape()->outputs,
             'memory' => $c->hasMemory(),
@@ -126,6 +127,7 @@ function problemData(ProblemRegistry $registry, string $name): array
     return [
         'ok' => true,
         'name' => $problem->name(),
+        'description' => $problem instanceof \Rotifer\Runtime\Fitness\Describable ? $problem->description() : '',
         'inputs' => $problem->shape()->inputs,
         'outputs' => $problem->shape()->outputs,
         'memory' => $problem->config()->hasMemory(),

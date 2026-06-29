@@ -14,7 +14,7 @@ use Rotifer\Runtime\EvolutionConfig;
  * rather than a hand-written class - what the dashboard's "New problem" form saves.
  * Lives in src/ (not problems/) because it is not zero-arg constructible.
  */
-final class CustomProblem implements Problem
+final class CustomProblem implements Problem, Describable
 {
     /** @param array<string, mixed> $definition */
     public function __construct(private readonly array $definition)
@@ -24,6 +24,22 @@ final class CustomProblem implements Problem
     public function name(): string
     {
         return (string) ($this->definition['name'] ?? 'custom');
+    }
+
+    public function description(): string
+    {
+        $stored = trim((string) ($this->definition['description'] ?? ''));
+        if ($stored !== '') {
+            return $stored;
+        }
+        // No author-supplied blurb, so summarise the shape it was built from.
+        return sprintf(
+            'Custom task from %d example row(s): %d input(s) -> %d output(s)%s.',
+            $this->rowCount(),
+            $this->inputs(),
+            $this->outputs(),
+            $this->hasMemory() ? ', with sequence memory' : '',
+        );
     }
 
     public function shape(): Shape

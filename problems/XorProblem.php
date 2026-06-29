@@ -8,6 +8,7 @@ use Rotifer\Network\Activation\Sigmoid;
 use Rotifer\Network\Shape;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Problem;
 
 /**
@@ -15,8 +16,13 @@ use Rotifer\Runtime\Fitness\Problem;
  * architecture: starting from a couple of hidden neurons, structural mutation is
  * free to grow whatever topology solves it. Perfect score is 4.0 (one per row).
  */
-final class XorProblem implements Problem
+final class XorProblem implements Problem, Describable
 {
+    public function description(): string
+    {
+        return 'The classic non-linearly-separable XOR - the smallest demo of evolving network topology from scratch.';
+    }
+
     public function name(): string
     {
         return 'xor';

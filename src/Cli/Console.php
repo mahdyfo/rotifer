@@ -16,6 +16,7 @@ use Rotifer\Persistence\SnapshotStore;
 use Rotifer\Runtime\EvolutionConfig;
 use Rotifer\Runtime\FastRuntime;
 use Rotifer\Runtime\RunOptions;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Problem;
 
 /**
@@ -231,9 +232,23 @@ final class Console
         }
         fwrite(STDOUT, 'Available problems:' . PHP_EOL);
         foreach ($problems as $problem) {
-            fwrite(STDOUT, sprintf('  %-20s %s' . PHP_EOL, $problem['name'], $problem['class']));
+            fwrite(STDOUT, sprintf('  %-20s %s' . PHP_EOL, $problem['name'], $this->describeProblem($problem['name'])));
         }
         return 0;
+    }
+
+    /** A problem's one-line description if it offers one (it's optional), else its class. */
+    private function describeProblem(string $name): string
+    {
+        try {
+            $problem = $this->registry->resolve($name);
+            if ($problem instanceof Describable) {
+                return $problem->description();
+            }
+        } catch (Throwable) {
+            // fall through to a neutral label below
+        }
+        return '';
     }
 
     private function commandHelp(int $code = 0): int

@@ -8,6 +8,7 @@ use Rotifer\Network\Activation\Sigmoid;
 use Rotifer\Network\Shape;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Problem;
 
 /**
@@ -16,8 +17,13 @@ use Rotifer\Runtime\Fitness\Problem;
  * Shows how to point Rotifer at ordinary tabular data. Perfect fit approaches
  * one point per row.
  */
-final class HousePriceProblem implements Problem
+final class HousePriceProblem implements Problem, Describable
 {
+    public function description(): string
+    {
+        return 'A regression task: estimate a normalized house price from a handful of tabular features.';
+    }
+
     public function name(): string
     {
         return 'house_price';

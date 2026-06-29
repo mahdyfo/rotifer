@@ -8,6 +8,7 @@ use Rotifer\Network\Activation\Sigmoid;
 use Rotifer\Network\Shape;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Problem;
 
 /**
@@ -21,8 +22,13 @@ use Rotifer\Runtime\Fitness\Problem;
  * bit-accuracy (fraction of outputs on the correct side of 0.5); perfect
  * reconstruction across all nine rows scores 18.0.
  */
-final class AutoEncoderProblem implements Problem
+final class AutoEncoderProblem implements Problem, Describable
 {
+    public function description(): string
+    {
+        return 'Unsupervised compression: reconstruct 7 inputs (+1 bias) through a 3-unit bottleneck (a fixed 5-3-5 hidden layer auto-encoder).';
+    }
+
     public function name(): string
     {
         return 'auto_encoder';

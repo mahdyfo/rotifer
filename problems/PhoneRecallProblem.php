@@ -8,6 +8,7 @@ use Rotifer\Network\Activation\Sigmoid;
 use Rotifer\Network\Shape;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
+use Rotifer\Runtime\Fitness\Describable;
 use Rotifer\Runtime\Fitness\Predictable;
 use Rotifer\Runtime\Fitness\Problem;
 
@@ -17,8 +18,13 @@ use Rotifer\Runtime\Fitness\Problem;
  * internal memory, so it has to evolve a counter and read digits off it. A pure
  * test of recurrence. Digits are normalized to [0,1] (digit/9) for the sigmoid.
  */
-final class PhoneRecallProblem implements Problem, Predictable
+final class PhoneRecallProblem implements Problem, Predictable, Describable
 {
+    public function description(): string
+    {
+        return 'Recall a fixed number digit by digit from a constant input - a pure test of evolved memory.';
+    }
+
     /** The number to memorize, digit by digit. */
     private const PHONE = '01100110101';
 
