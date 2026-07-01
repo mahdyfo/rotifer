@@ -77,7 +77,7 @@ final class CustomProblemStore
         if ($description !== '') {
             $definition['description'] = mb_substr($description, 0, self::MAX_DESCRIPTION);
         }
-        foreach (['population', 'generations', 'islands', 'seed'] as $key) {
+        foreach (['population', 'generations', 'islands', 'seed', 'window', 'window-prime'] as $key) {
             if (isset($payload[$key]) && is_numeric($payload[$key])) {
                 $definition[$key] = (int) $payload[$key];
             }

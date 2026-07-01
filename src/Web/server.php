@@ -15,8 +15,16 @@ declare(strict_types=1);
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use Rotifer\Cli\ProblemRegistry;
+use Rotifer\Network\Activation\ActivationFactory;
+use Rotifer\Network\NetworkSpec;
+use Rotifer\Network\Shape;
+use Rotifer\Organism\Organism;
+use Rotifer\Persistence\Codec\HexCodec;
+use Rotifer\Persistence\Codec\JsonCodec;
 use Rotifer\Persistence\SnapshotStore;
 use Rotifer\Runtime\FastRuntime;
+use Rotifer\Runtime\Fitness\Predictor;
+use Rotifer\Web\AgentStore;
 use Rotifer\Web\CustomProblemStore;
 use Rotifer\Web\Inference;
 use Rotifer\Web\RunManager;
@@ -25,6 +33,7 @@ $root = dirname(__DIR__, 2);
 $publicDir = __DIR__ . '/public';
 $store = new SnapshotStore($root . '/runs');
 $customStore = new CustomProblemStore($root);
+$agentStore = new AgentStore($root);
 $registry = new ProblemRegistry($root . '/problems', $customStore);
 $manager = new RunManager($root, $store);
 
@@ -36,7 +45,7 @@ if (str_starts_with($uri, '/api/')) {
     // The client polls fixed URLs (e.g. /api/status); never let the browser serve
     // a cached response or the dashboard shows stale state.
     header('Cache-Control: no-store');
-    echo json_encode(handleApi($uri, $method, $registry, $store, $manager, $customStore), JSON_THROW_ON_ERROR);
+    echo json_encode(handleApi($uri, $method, $registry, $store, $manager, $customStore, $agentStore), JSON_THROW_ON_ERROR);
     return true;
 }
 
@@ -55,7 +64,7 @@ http_response_code(404);
 echo 'Not found';
 return true;
 
-function handleApi(string $uri, string $method, ProblemRegistry $registry, SnapshotStore $store, RunManager $manager, CustomProblemStore $customStore): mixed
+function handleApi(string $uri, string $method, ProblemRegistry $registry, SnapshotStore $store, RunManager $manager, CustomProblemStore $customStore, AgentStore $agentStore): mixed
 {
     return match ($uri) {
         '/api/problems' => listProblems($registry),
@@ -71,8 +80,110 @@ function handleApi(string $uri, string $method, ProblemRegistry $registry, Snaps
         '/api/best' => readJson($store->bestPath(runParam($manager))),
         '/api/predictions' => readJson($store->predictionsPath(runParam($manager))),
         '/api/infer' => inferOutput($store, runParam($manager), (string) ($_GET['input'] ?? '')),
+        // Saved-agent library: list, auto-save the current run's champion, delete, run
+        // a saved agent on a custom input, and rebuild its predictions table - all
+        // independent of any live run.
+        '/api/agents' => $agentStore->all(),
+        '/api/agents/save' => $method === 'POST' ? saveAgent($store, $manager, $agentStore, requestBody()) : ['ok' => false, 'error' => 'POST required'],
+        '/api/agents/delete' => $method === 'POST' ? ['ok' => $agentStore->delete((string) (requestBody()['name'] ?? ''))] : ['ok' => false, 'error' => 'POST required'],
+        '/api/agents/infer' => agentInfer($agentStore, (string) ($_GET['name'] ?? ''), (string) ($_GET['input'] ?? '')),
+        '/api/agents/predictions' => agentPredictions($registry, $agentStore, (string) ($_GET['name'] ?? '')),
         default => ['error' => 'unknown endpoint'],
     };
+}
+
+/**
+ * Save a run's current champion into the agent library. Everything needed comes
+ * from files the run already writes: the last stream record (network + genes,
+ * fitness, match rate) and meta.json (activation, memory). Saving is automatic
+ * (on finish/stop), so it always saves under the run name - one slot per run. The
+ * genome is stored hex-encoded to keep the file small.
+ *
+ * @param array<string, mixed> $body
+ */
+function saveAgent(SnapshotStore $store, RunManager $manager, AgentStore $agentStore, array $body): array
+{
+    $run = isset($body['run']) && is_string($body['run']) && preg_match('/^[A-Za-z0-9_-]+$/', $body['run'])
+        ? $body['run']
+        : ($manager->status()['active'] ?? 'run');
+
+    $record = lastRecord($store, $run);
+    $network = $record['network'] ?? null;
+    if (!is_array($network) || !isset($network['genes']) || !is_array($network['genes'])) {
+        return ['ok' => false, 'error' => 'no champion to save yet'];
+    }
+
+    $meta = readJson($store->metaPath($run));
+    // Stream genes are JsonCodec tuples; re-encode the genome to compact hex.
+    $genome = (new JsonCodec())->decode(json_encode($network['genes'], JSON_THROW_ON_ERROR));
+
+    return $agentStore->save([
+        'name' => $run,
+        'problem' => is_array($meta) ? (string) ($meta['problem'] ?? $run) : $run,
+        'inputs' => (int) ($network['inputs'] ?? 1),
+        'outputs' => (int) ($network['outputs'] ?? 1),
+        'activation' => is_array($meta) ? (string) ($meta['activation'] ?? 'sigmoid') : 'sigmoid',
+        'memory' => is_array($meta) ? (bool) ($meta['memory'] ?? false) : false,
+        'fitness' => (float) ($record['allTimeBest'] ?? $record['best'] ?? 0.0),
+        'matchRate' => $record['matchRate'] ?? null,
+        'hidden' => (int) ($record['hidden'] ?? 0),
+        'geneCount' => (int) ($record['genes'] ?? count($network['genes'])),
+        'genome' => (new HexCodec())->encode($genome),
+    ]);
+}
+
+/** Run a saved agent on a `;`-separated step sequence, like /api/infer but from the library. */
+function agentInfer(AgentStore $agentStore, string $name, string $rawInput): array
+{
+    $agent = $agentStore->get($name);
+    if ($agent === null || !is_string($agent['genome'] ?? null)) {
+        return ['ok' => false, 'error' => 'agent not found'];
+    }
+    $inputs = (int) $agent['inputs'];
+    $outputs = (int) $agent['outputs'];
+    $activation = (string) ($agent['activation'] ?? 'sigmoid');
+    $memory = (bool) ($agent['memory'] ?? false);
+    $genome = (new HexCodec())->decode((string) $agent['genome']);
+    $steps = array_map(static fn (string $s) => parseVector($s, $inputs), explode(';', $rawInput));
+
+    $result = Inference::evaluateGenome($genome, $inputs, $outputs, $activation, $memory, $steps);
+    return [
+        'ok' => true,
+        'steps' => count($steps),
+        'inputs' => $inputs,
+        'outputs' => $outputs,
+        'memory' => $memory,
+        'activation' => $activation,
+        'outputs_values' => $result['outputs'],
+        'nodes' => $result['nodes'],
+    ];
+}
+
+/**
+ * Rebuild a saved agent's predictions table by running it over its problem's data
+ * (the same {@see Predictor} used at the end of a run) - so loading an agent shows
+ * the "expected vs predicted" results, exactly like finishing a run does.
+ */
+function agentPredictions(ProblemRegistry $registry, AgentStore $agentStore, string $name): array
+{
+    $agent = $agentStore->get($name);
+    if ($agent === null || !is_string($agent['genome'] ?? null)) {
+        return ['ok' => false, 'error' => 'agent not found'];
+    }
+    try {
+        $problem = $registry->resolve((string) ($agent['problem'] ?? ''));
+    } catch (\Throwable $e) {
+        return ['ok' => false, 'error' => 'problem no longer available'];
+    }
+
+    $spec = new NetworkSpec(
+        new Shape((int) $agent['inputs'], (int) $agent['outputs']),
+        (bool) ($agent['memory'] ?? false),
+        ActivationFactory::fromName((string) ($agent['activation'] ?? 'sigmoid')),
+    );
+    $organism = new Organism((new HexCodec())->decode((string) $agent['genome']), $spec);
+
+    return ['ok' => true] + Predictor::describe($problem, $organism);
 }
 
 /** @return list<array<string, mixed>> */
@@ -89,6 +200,10 @@ function listProblems(ProblemRegistry $registry): array
             'inputs' => $problem->shape()->inputs,
             'outputs' => $problem->shape()->outputs,
             'memory' => $c->hasMemory(),
+            // Random scoring window (0 = off) + priming rows, so the advanced-params
+            // "sequence" group can pre-fill them for the selected problem.
+            'window' => $c->getWindowSize(),
+            'window-prime' => $c->getWindowPrime(),
             // Every settable knob, keyed exactly like the CLI flags and the /api/start
             // overrides (RunOptions is the shared source of truth), plus `parallel`,
             // which the UI shows as a pre-checked box rather than a value field.
@@ -131,6 +246,9 @@ function problemData(ProblemRegistry $registry, string $name): array
         'inputs' => $problem->shape()->inputs,
         'outputs' => $problem->shape()->outputs,
         'memory' => $problem->config()->hasMemory(),
+        // Random scoring window size (0 = off) + priming rows, so the Data panel can pre-fill them.
+        'window' => $problem->config()->getWindowSize(),
+        'window-prime' => $problem->config()->getWindowPrime(),
         'custom' => str_starts_with($problem->name(), 'custom_'),
         'episodic' => $episodic,
         'rows' => $rows,
