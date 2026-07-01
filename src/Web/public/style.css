@@ -122,8 +122,21 @@ button:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
 .advanced > summary::before { content: '▸'; display: inline-block; margin-right: 6px; }
 .advanced[open] > summary::before { content: '▾'; }
 .advanced > summary:hover { color: var(--ink); }
-.control-row.adv { margin-top: 12px; gap: 10px 14px; }
+.control-row.adv { margin-top: 12px; gap: 14px 16px; align-items: stretch; }
 .control-row.adv .field.num input { width: 72px; }
+/* advanced params are split into labelled, boxed groups so related knobs read as a
+   set (topology / mutation / structure / selection / islands / sequence). */
+.adv-group {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px;
+    position: relative; border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 12px 12px; background: rgba(255,255,255,0.015);
+}
+.adv-label {
+    position: absolute; top: -8px; left: 10px; padding: 0 6px; background: var(--panel);
+    color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px;
+}
+.adv-label[data-tip] { cursor: help; }
+.adv-group .chk { align-self: flex-end; height: 35px; }
 .chk { display: flex; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; cursor: pointer; }
 .chk input { accent-color: var(--bio); }
 
@@ -183,10 +196,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
 /* create-problem panel */
 .create-panel { margin-bottom: 16px; }
 .create-panel .cp-hint { color: var(--muted); font-size: 12px; margin: 10px 0; }
-/* the memory checkbox sits in a row of label+input fields; the fields are bottom-
-   aligned, so give it the input box height and bottom-align it too - that centres
-   the checkbox on the inputs beside it, not on the whole label+input column. */
-.create-panel .control-row .chk { align-self: flex-end; height: 35px; }
+/* pointer back to where the memory / window controls moved (advanced parameters) */
+.cp-seq-note { align-self: flex-end; padding-bottom: 10px; color: var(--muted); font-size: 11.5px; cursor: help; }
 .control-panel .control-row:not(.bio) > .chk { align-self: flex-end; height: 35px; }
 /* add-row buttons bracket the rows list (one above, one below) for convenience */
 .cp-addrow { margin: 8px 0; background: var(--panel-2); border-style: dashed; color: var(--muted); }
@@ -224,6 +235,23 @@ button.small { padding: 7px 12px; }
     display: inline-block; padding: 2px 8px; margin: 0 4px 4px 0; border-radius: 6px;
     background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
 }
+
+/* saved agents (auto-saved champions) inside the predictions panel */
+.agent-bar { margin-bottom: 12px; align-items: flex-end; }
+/* Centre the meta text on the select beside it, not on the label+select stack:
+   flex-end drops it to the input's row, then a fixed input-height box centres it. */
+.agent-meta { font-size: 13px; gap: 5px; color: var(--muted); align-self: flex-end; height: 35px; display: flex; align-items: center; }
+.agent-meta b { color: var(--ink); }
+.agent-meta .mem { color: var(--violet); }
+.agent-bar #agentDeleteBtn { align-self: flex-end; height: 35px; }
+.agent-empty { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+.agent-run { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.agent-run h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+
+/* biology parameter groups show/hide with their toggle; display:contents keeps
+   the fields in the row's flex flow when visible. */
+.bio-group { display: contents; }
+.bio-empty { color: var(--muted); font-size: 13px; align-self: center; }
 
 /* connection hover: highlight the line + a styled weight tooltip */
 #network path.edge { transition: stroke-width 0.1s ease, opacity 0.1s ease; }

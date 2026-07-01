@@ -2,5 +2,6 @@
 /vendor
 /autosave
 /runs
+/saved_agents
 /.phpunit.result.cache
 /.phpunit.cache

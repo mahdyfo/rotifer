@@ -48,55 +48,84 @@
             <label class="chk" data-tip="Mutate more when stuck, less when improving."><input type="checkbox" id="bioAdaptive"> adaptive&nbsp;mutation</label>
             <label class="chk" data-tip="Organisms tune their own weights and pass some on. Runs serial."><input type="checkbox" id="bioLearning"> lifetime&nbsp;learning</label>
         </div>
-        <details class="advanced">
+        <details class="advanced" id="advParams">
             <summary>advanced parameters</summary>
             <div class="control-row adv">
-                <label class="field" data-tip="Neuron activation. Sigmoid/tanh squash to a range; relu/gelu pass positives through."><span>activation</span>
-                    <select id="cfgActivation">
-                        <option value="sigmoid">sigmoid</option>
-                        <option value="relu">relu</option>
-                        <option value="leaky_relu">leaky relu</option>
-                        <option value="tanh">tanh</option>
-                        <option value="threshold">threshold</option>
-                        <option value="gelu">gelu</option>
-                        <option value="softmax">softmax</option>
-                    </select>
-                </label>
-                <label class="field num" data-tip="Chance offspring mix two parents (vs. cloning one)."><span>crossover</span><input id="cfgCrossover" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Chance to nudge a weight."><span>weight&nbsp;mut</span><input id="cfgWeightMut" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="How many weights are nudged each time a weight mutation happens."><span>weight&nbsp;count</span><input id="cfgWeightCount" type="number" min="1" step="1"></label>
-                <label class="field num" data-tip="Largest a single weight nudge can be (± this, scaled). Bigger = coarser search."><span>weight&nbsp;adjust</span><input id="cfgWeightAdjust" type="number" min="0" step="0.05"></label>
-                <label class="field num" data-tip="Chance a nudged weight is replaced with a fresh random value instead of being nudged."><span>weight&nbsp;rnd</span><input id="cfgWeightRandomize" type="number" min="0" max="1" step="0.05"></label>
-                <label class="field num" data-tip="Chance to grow a new neuron."><span>add&nbsp;neuron</span><input id="cfgAddNeuron" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Chance to add a connection."><span>add&nbsp;conn</span><input id="cfgAddConn" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Chance to prune a neuron."><span>del&nbsp;neuron</span><input id="cfgDelNeuron" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Chance to prune a connection."><span>del&nbsp;conn</span><input id="cfgDelConn" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Fraction of each island kept as parents each generation."><span>survive</span><input id="cfgSurvive" type="number" min="0.01" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Top organisms copied unchanged into the next generation."><span>elitism</span><input id="cfgElitism" type="number" min="0" step="1"></label>
-                <label class="field" data-tip="Network shape. Empty = dynamic: the topology evolves freely. Or fixed layer sizes like 5,3,5 for a classic 3 layer network (no input→output shortcuts; neuron count frozen)."><span>layers&nbsp;neurons</span><input id="cfgHiddenLayers" type="text" placeholder="dynamic"></label>
-                <label class="field num" data-tip="Hidden neurons each freshly seeded organism starts with (dynamic topology only; ignored when hidden layers are set)."><span>init&nbsp;hidden</span><input id="cfgInitHidden" type="number" min="0" step="1"></label>
-                <label class="field num" data-tip="When scores are basically equal, rank the simpler networks higher. 0 = off (let it grow freely). Higher = stricter tie. 3 means it will tie at 0.001 fitness, 2 means 0.01,..."><span>simplicity</span><input id="cfgSimplicity" type="number" min="0" max="9" step="1"></label>
-                <label class="field num" data-tip="Fraction of fresh random organisms injected each generation (0 = none)."><span>diversity</span><input id="cfgDiversity" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Trade top organisms between islands every N generations (0 = never; needs 2+ islands)."><span>migrate&nbsp;every</span><input id="cfgMigrateEvery" type="number" min="0" step="1"></label>
-                <label class="field num" data-tip="How many top organisms migrate each time."><span>migrate&nbsp;top</span><input id="cfgMigrateTop" type="number" min="1" step="1"></label>
+                <div class="adv-group">
+                    <span class="adv-label">topology</span>
+                    <label class="field" data-tip="Neuron activation. Sigmoid/tanh squash to a range; relu/gelu pass positives through."><span>activation</span>
+                        <select id="cfgActivation">
+                            <option value="sigmoid">sigmoid</option>
+                            <option value="relu">relu</option>
+                            <option value="leaky_relu">leaky relu</option>
+                            <option value="tanh">tanh</option>
+                            <option value="threshold">threshold</option>
+                            <option value="gelu">gelu</option>
+                            <option value="softmax">softmax</option>
+                        </select>
+                    </label>
+                    <label class="field" data-tip="Network shape. Empty = dynamic: the topology evolves freely. Or fixed layer sizes like 5,3,5 for a classic 3 layer network (no input→output shortcuts; neuron count frozen)."><span>layers&nbsp;neurons</span><input id="cfgHiddenLayers" type="text" placeholder="dynamic"></label>
+                    <label class="field num" data-tip="Hidden neurons each freshly seeded organism starts with (dynamic topology only; ignored when hidden layers are set)."><span>init&nbsp;hidden</span><input id="cfgInitHidden" type="number" min="0" step="1"></label>
+                </div>
+                <div class="adv-group">
+                    <span class="adv-label">mutation</span>
+                    <label class="field num" data-tip="Chance offspring mix two parents (vs. cloning one)."><span>crossover</span><input id="cfgCrossover" type="number" min="0" max="1" step="0.01"></label>
+                    <label class="field num" data-tip="Chance to nudge a weight."><span>weight&nbsp;mut</span><input id="cfgWeightMut" type="number" min="0" max="1" step="0.01"></label>
+                    <label class="field num" data-tip="How many weights are nudged each time a weight mutation happens."><span>weight&nbsp;count</span><input id="cfgWeightCount" type="number" min="1" step="1"></label>
+                    <label class="field num" data-tip="Largest a single weight nudge can be (± this, scaled). Bigger = coarser search."><span>weight&nbsp;adjust</span><input id="cfgWeightAdjust" type="number" min="0" step="0.05"></label>
+                    <label class="field num" data-tip="Chance a nudged weight is replaced with a fresh random value instead of being nudged."><span>weight&nbsp;rnd</span><input id="cfgWeightRandomize" type="number" min="0" max="1" step="0.05"></label>
+                </div>
+                <div class="adv-group">
+                    <span class="adv-label">structure</span>
+                    <label class="field num" data-tip="Chance to grow a new neuron."><span>add&nbsp;neuron</span><input id="cfgAddNeuron" type="number" min="0" max="1" step="0.01"></label>
+                    <label class="field num" data-tip="Chance to add a connection."><span>add&nbsp;conn</span><input id="cfgAddConn" type="number" min="0" max="1" step="0.01"></label>
+                    <label class="field num" data-tip="Chance to prune a neuron."><span>del&nbsp;neuron</span><input id="cfgDelNeuron" type="number" min="0" max="1" step="0.01"></label>
+                    <label class="field num" data-tip="Chance to prune a connection."><span>del&nbsp;conn</span><input id="cfgDelConn" type="number" min="0" max="1" step="0.01"></label>
+                </div>
+                <div class="adv-group">
+                    <span class="adv-label">selection</span>
+                    <label class="field num" data-tip="Fraction of each island kept as parents each generation."><span>survive</span><input id="cfgSurvive" type="number" min="0.01" max="1" step="0.01"></label>
+                    <label class="field num" data-tip="Top organisms copied unchanged into the next generation."><span>elitism</span><input id="cfgElitism" type="number" min="0" step="1"></label>
+                    <label class="field num" data-tip="When scores are basically equal, rank the simpler networks higher. 0 = off (let it grow freely). Higher = stricter tie. 3 means it will tie at 0.001 fitness, 2 means 0.01,..."><span>simplicity</span><input id="cfgSimplicity" type="number" min="0" max="9" step="1"></label>
+                    <label class="field num" data-tip="Fraction of fresh random organisms injected each generation (0 = none)."><span>diversity</span><input id="cfgDiversity" type="number" min="0" max="1" step="0.01"></label>
+                </div>
+                <div class="adv-group">
+                    <span class="adv-label">islands</span>
+                    <label class="field num" data-tip="Trade top organisms between islands every N generations (0 = never; needs 2+ islands)."><span>migrate&nbsp;every</span><input id="cfgMigrateEvery" type="number" min="0" step="1"></label>
+                    <label class="field num" data-tip="How many top organisms migrate each time."><span>migrate&nbsp;top</span><input id="cfgMigrateTop" type="number" min="1" step="1"></label>
+                </div>
+                <div class="adv-group">
+                    <span class="adv-label" data-tip="Defines the selected problem (applied when you Save it via New / Data). A memory problem carries state across steps; the random window stops a memory net overfitting to step numbers.">sequence</span>
+                    <label class="chk" data-tip="For recall tasks where state must persist across steps."><input type="checkbox" id="cpMemory"> memory&nbsp;(sequence)</label>
+                    <label class="chk" id="cpRandomizeField" data-tip="Score each generation on a random window of the sequence instead of the whole thing, so the network can't overfit by counting steps. Only for memory problems."><input type="checkbox" id="cpRandomize"> randomize&nbsp;start</label>
+                    <label class="field num" id="cpWindowField" data-tip="How many rows the random window scores each generation. The start point is picked fresh each generation, so the network can't lock onto step numbers."><span>window</span><input id="cpWindow" type="number" min="1" step="1" value="5"></label>
+                    <label class="field num" id="cpPrimeField" data-tip="How many rows to feed the network (unscored) just before the window, to prime its memory. The random window always starts after these priming rows. 0 = start cold at the window."><span>prime</span><input id="cpPrime" type="number" min="0" step="1" value="0"></label>
+                </div>
             </div>
         </details>
         <details class="advanced">
             <summary>biology parameters</summary>
             <div class="control-row adv">
-                <span class="bio-label">trauma</span>
-                <label class="field num" data-tip="Stress boost applied on hardship - higher = a bigger mutation kick after a bad generation (0-1). Only used when trauma is on."><span>intensity</span><input id="cfgTraumaIntensity" type="number" min="0" max="1" step="0.05"></label>
-                <label class="field num" data-tip="How fast inherited stress fades each generation (0-1). Higher = forgets faster."><span>decay</span><input id="cfgTraumaDecay" type="number" min="0" max="1" step="0.05"></label>
-                <span class="bio-label">adaptive</span>
-                <label class="field num" data-tip="Generations without improvement before mutation ramps up. Only used when adaptive mutation is on."><span>patience</span><input id="cfgAdaptivePatience" type="number" min="1" step="1"></label>
-                <label class="field num" data-tip="Multiply the mutation scale by this when stuck (greater than 1 = explore harder)."><span>up&nbsp;×</span><input id="cfgAdaptiveUp" type="number" min="1" step="0.05"></label>
-                <label class="field num" data-tip="Multiply the mutation scale by this when improving (less than 1 = settle down)."><span>down&nbsp;×</span><input id="cfgAdaptiveDown" type="number" min="0" max="1" step="0.01"></label>
-                <label class="field num" data-tip="Lowest the mutation scale is allowed to drop to."><span>min&nbsp;scale</span><input id="cfgAdaptiveMin" type="number" min="0" step="0.05"></label>
-                <label class="field num" data-tip="Highest the mutation scale is allowed to climb to."><span>max&nbsp;scale</span><input id="cfgAdaptiveMax" type="number" min="0" step="0.5"></label>
-                <span class="bio-label">lifetime</span>
-                <label class="field num" data-tip="Weight-tuning steps each organism takes during its own lifetime, per evaluation (0 = none). Only used when lifetime learning is on."><span>steps</span><input id="cfgLifetimeSteps" type="number" min="0" step="1"></label>
-                <label class="field num" data-tip="Size of each lifetime-learning weight step."><span>step&nbsp;size</span><input id="cfgLifetimeStepSize" type="number" min="0" max="1" step="0.05"></label>
-                <label class="field num" data-tip="Fraction of what an organism learns that is written back into its genome and inherited (Lamarckian, 0-1). 0 = Baldwin only (learning helps scores but isn't inherited)."><span>lamarckian</span><input id="cfgLamarckian" type="number" min="0" max="1" step="0.05"></label>
+                <span class="bio-empty" id="bioParamsEmpty">Turn on a biology option above to tune its parameters here.</span>
+                <span class="bio-group" id="traumaParams">
+                    <span class="bio-label">trauma</span>
+                    <label class="field num" data-tip="Stress boost applied on hardship - higher = a bigger mutation kick after a bad generation (0-1). Only used when trauma is on."><span>intensity</span><input id="cfgTraumaIntensity" type="number" min="0" max="1" step="0.05"></label>
+                    <label class="field num" data-tip="How fast inherited stress fades each generation (0-1). Higher = forgets faster."><span>decay</span><input id="cfgTraumaDecay" type="number" min="0" max="1" step="0.05"></label>
+                </span>
+                <span class="bio-group" id="adaptiveParams">
+                    <span class="bio-label">adaptive</span>
+                    <label class="field num" data-tip="Generations without improvement before mutation ramps up. Only used when adaptive mutation is on."><span>patience</span><input id="cfgAdaptivePatience" type="number" min="1" step="1"></label>
+                    <label class="field num" data-tip="Multiply the mutation scale by this when stuck (greater than 1 = explore harder)."><span>up&nbsp;×</span><input id="cfgAdaptiveUp" type="number" min="1" step="0.05"></label>
+                    <label class="field num" data-tip="Multiply the mutation scale by this when improving (less than 1 = settle down)."><span>down&nbsp;×</span><input id="cfgAdaptiveDown" type="number" min="0" max="1" step="0.01"></label>
+                    <label class="field num" data-tip="Lowest the mutation scale is allowed to drop to."><span>min&nbsp;scale</span><input id="cfgAdaptiveMin" type="number" min="0" step="0.05"></label>
+                    <label class="field num" data-tip="Highest the mutation scale is allowed to climb to."><span>max&nbsp;scale</span><input id="cfgAdaptiveMax" type="number" min="0" step="0.5"></label>
+                </span>
+                <span class="bio-group" id="lifetimeParams">
+                    <span class="bio-label">lifetime</span>
+                    <label class="field num" data-tip="Weight-tuning steps each organism takes during its own lifetime, per evaluation (0 = none). Only used when lifetime learning is on."><span>steps</span><input id="cfgLifetimeSteps" type="number" min="0" step="1"></label>
+                    <label class="field num" data-tip="Size of each lifetime-learning weight step."><span>step&nbsp;size</span><input id="cfgLifetimeStepSize" type="number" min="0" max="1" step="0.05"></label>
+                    <label class="field num" data-tip="Fraction of what an organism learns that is written back into its genome and inherited (Lamarckian, 0-1). 0 = Baldwin only (learning helps scores but isn't inherited)."><span>lamarckian</span><input id="cfgLamarckian" type="number" min="0" max="1" step="0.05"></label>
+                </span>
             </div>
         </details>
     </section>
@@ -107,7 +136,7 @@
             <label class="field"><span>name</span><input id="cpName" type="text" placeholder="my task"></label>
             <label class="field num"><span>inputs</span><input id="cpInputs" type="number" min="1" max="16" step="1" value="2"></label>
             <label class="field num"><span>outputs</span><input id="cpOutputs" type="number" min="1" max="16" step="1" value="1"></label>
-            <label class="chk" data-tip="For recall tasks where state must persist across steps."><input type="checkbox" id="cpMemory"> memory&nbsp;(sequence)</label>
+            <span class="cp-seq-note" data-tip="Memory / random-window options for this problem now live under 'advanced parameters' above.">↑ memory &amp; window options are in advanced parameters</span>
             <div class="actions">
                 <button id="cpRunTemp" data-tip="Run with these rows without saving a permanent problem.">▶ Run once</button>
                 <button id="cpSave" class="primary">Save</button>
@@ -182,9 +211,25 @@
         <div class="islands" id="islands"></div>
     </section>
 
-    <section class="panel results-panel" id="resultsPanel" hidden>
+    <section class="panel results-panel" id="resultsPanel">
         <h2>Champion predictions <span class="hint" id="successHint"></span></h2>
+        <div class="control-row agent-bar">
+            <label class="field" data-tip="Best champion of each finished/stopped run, saved automatically. Pick one to see its predictions and try it below."><span>agent</span><select id="agentSelect"></select></label>
+            <button id="agentDeleteBtn" class="ghost small" data-tip="Delete the selected saved agent.">🗑</button>
+            <span class="agent-meta" id="agentMeta"></span>
+        </div>
         <div class="results" id="results"></div>
+        <div class="agent-run" id="agentRun" hidden>
+            <h3>Try it <span class="hint">feed an input; a memory agent is fed one step at a time</span></h3>
+            <div class="infer-row">
+                <div class="infer-inputs" id="agentInputs"></div>
+                <button id="agentRunBtn" class="primary small">Run</button>
+                <button id="agentReset" class="small" hidden data-tip="Clear the agent's memory and start the sequence over.">↺ Reset memory</button>
+                <span class="infer-step" id="agentStep" hidden></span>
+            </div>
+            <div class="infer-out" id="agentOut"></div>
+        </div>
+        <p class="agent-empty" id="agentEmpty">No saved agents yet. When a run finishes or you stop it, its best champion is saved here automatically.</p>
     </section>
 
     <div class="edge-tip" id="edgeTip" hidden></div>

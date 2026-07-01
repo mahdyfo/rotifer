@@ -27,6 +27,8 @@ const state = {
     cpMode: null,       // which button opened the create/edit panel: 'new' | 'data' | null
     cpRows: [],         // create/edit problem rows
     resultsShown: false, // results table already rendered for this (stopped) run
+    agents: {},         // slug -> saved-agent summary (for the library dropdown)
+    agentSeq: [],       // accumulated input steps for a loaded memory agent
 };
 
 // "parallel" is a checkbox: off = serial (the default, fastest for most problems);
@@ -99,6 +101,12 @@ function fillDefaults(name) {
     syncTopology();
     // A problem can prefer parallel (defaults.parallel); otherwise serial.
     $('cfgParallel').checked = !!d.parallel;
+    // Sequence/memory group (moved into advanced params) reflects the selected problem.
+    $('cpMemory').checked = !!p.memory;
+    $('cpRandomize').checked = (p.window || 0) > 0;
+    $('cpWindow').value = (p.window && p.window > 0) ? p.window : 5;
+    $('cpPrime').value = p['window-prime'] || 0;
+    syncCpRandom();
     $('deleteBtn').hidden = !p.custom;
     $('pmeta').innerHTML = `${p.inputs} in → ${p.outputs} out${p.memory ? ' · <span class="mem">memory</span>' : ''}`;
     $('problemDesc').textContent = p.description || '';
@@ -119,22 +127,29 @@ function syncTopology() {
     $('cfgInitHidden').disabled = layered;
 }
 
-// Grey out each biology feature's numeric params when its toggle is off,
-// so switching problems makes the active/inactive state immediately visible.
+// Show each biology feature's parameters only when its toggle is on, and hide the
+// group when off - so the "biology parameters" section only lists what's active.
 function syncBiology() {
     const trauma = $('bioTrauma').checked;
     const adaptive = $('bioAdaptive').checked;
     const learning = $('bioLearning').checked;
-    $('cfgTraumaIntensity').disabled = !trauma;
-    $('cfgTraumaDecay').disabled = !trauma;
-    $('cfgAdaptivePatience').disabled = !adaptive;
-    $('cfgAdaptiveUp').disabled = !adaptive;
-    $('cfgAdaptiveDown').disabled = !adaptive;
-    $('cfgAdaptiveMin').disabled = !adaptive;
-    $('cfgAdaptiveMax').disabled = !adaptive;
-    $('cfgLifetimeSteps').disabled = !learning;
-    $('cfgLifetimeStepSize').disabled = !learning;
-    $('cfgLamarckian').disabled = !learning;
+    $('traumaParams').style.display = trauma ? '' : 'none';
+    $('adaptiveParams').style.display = adaptive ? '' : 'none';
+    $('lifetimeParams').style.display = learning ? '' : 'none';
+    // A hint when nothing is on, so the empty section doesn't look broken.
+    $('bioParamsEmpty').style.display = (trauma || adaptive || learning) ? 'none' : '';
+}
+
+// Random-window controls (the "sequence" group in advanced params) apply only to
+// memory problems: the "randomize start" toggle shows when memory is on, and the
+// window/prime sizes show once the toggle is on.
+function syncCpRandom() {
+    const memory = $('cpMemory').checked;
+    const randomize = $('cpRandomize').checked;
+    const show = memory && randomize;
+    $('cpRandomizeField').style.display = memory ? '' : 'none';
+    $('cpWindowField').style.display = show ? '' : 'none';
+    $('cpPrimeField').style.display = show ? '' : 'none';
 }
 
 // Turning lifetime learning on while its step count is still 0 would be a no-op,
@@ -156,6 +171,12 @@ async function startRun(resume = false) {
     };
     for (const [id, key] of Object.entries(NUM_FIELDS)) overrides[key] = +$(id).value;
     for (const [id, key] of Object.entries(BIO_FIELDS)) overrides[key] = $(id).checked;
+    // Sequence/memory controls (advanced params): memory toggles recurrent state; the
+    // random scoring window is live only when "randomize start" is on, else window = 0.
+    const seqWindow = $('cpMemory').checked && $('cpRandomize').checked;
+    overrides.memory = $('cpMemory').checked;
+    overrides.window = seqWindow ? Math.max(1, +$('cpWindow').value || 0) : 0;
+    overrides['window-prime'] = seqWindow ? Math.max(0, +$('cpPrime').value || 0) : 0;
     // Continue: if the previous run still had generations left (it was stopped
     // early), finish that original plan and keep the same cap. Only once it has
     // reached its last specified generation does Continue run unbounded (∞).
@@ -167,7 +188,6 @@ async function startRun(resume = false) {
     }
     const body = { problem: $('problemSelect').value, overrides };
     $('startBtn').disabled = true;
-    $('resultsPanel').hidden = true;
     try {
         const res = await (await fetch('/api/start', { method: 'POST', body: JSON.stringify(body) })).json();
         if (res.ok) {
@@ -189,6 +209,17 @@ const continueRun = () => startRun(true);
 
 async function stopRun() {
     try { await fetch('/api/stop', { method: 'POST' }); } catch (_) { /* ignore */ }
+    // Don't wait for the status poll to notice: give the run a beat to flush its last
+    // checkpoint, then save its champion and show it in the predictions panel.
+    setTimeout(finalizeStoppedRun, 800);
+}
+
+// Once a run is idle (finished or stopped), auto-save its champion and select it in
+// the predictions panel so its results appear with no manual step. Idempotent.
+async function finalizeStoppedRun() {
+    if (state.resultsShown || !state.activeRun || !state.history.length) return;
+    state.resultsShown = true;
+    await autoSaveAgent();
 }
 
 // Clear everything tied to the records of one run instance (kept separate from
@@ -203,7 +234,6 @@ function resetRunView() {
     state.inferSeq = [];
     state.resultsShown = false;
     $('infer').hidden = true;
-    $('resultsPanel').hidden = true;
 }
 
 function switchRun(name) {
@@ -310,11 +340,11 @@ async function poll() {
                 drawChart();
             }
 
-            // Show the champion's results table once the run is no longer live,
-            // whether it finished or was stopped (predictions are checkpointed every gen)
+            // Once the run is no longer live (finished or stopped), auto-save its best
+            // champion to the agent library and select it - which renders its predictions
+            // table and "try it" panel, exactly like finishing a run used to.
             if (!state.running && state.history.length && !state.resultsShown) {
-                state.resultsShown = true;
-                await showResults();
+                await finalizeStoppedRun();
             }
             delay = (state.running || data.records.length) ? 350 : 1200;
         }
@@ -379,10 +409,15 @@ function fmtDuration(ms) {
 }
 
 /* ---------- results + success rate ---------- */
-async function showResults() {
-    let table;
-    try { table = await (await fetch(`/api/predictions?run=${encodeURIComponent(state.activeRun)}`)).json(); } catch (_) { return; }
-    if (!table || !table.columns || !table.rows || !table.rows.length) return;
+// Render an "expected vs predicted" table (from a run champion or a loaded agent).
+function renderResultsTable(table) {
+    const hint = $('successHint');
+    if (!table || !table.columns || !table.rows || !table.rows.length) {
+        $('results').innerHTML = '';
+        hint.textContent = '';
+        hint.className = 'hint';
+        return;
+    }
     const matchCol = table.columns.findIndex((c) => c === 'match' || c === 'ok');
     const head = '<tr>' + table.columns.map((c) => `<th>${esc(c)}</th>`).join('') + '</tr>';
     const body = table.rows.map((r) => '<tr>' + r.map((c, i) => {
@@ -391,7 +426,6 @@ async function showResults() {
     }).join('') + '</tr>').join('');
     $('results').innerHTML = `<table>${head}${body}</table>`;
 
-    const hint = $('successHint');
     if (typeof table.successRate === 'number') {
         const pct = Math.round(table.successRate * 100);
         hint.textContent = `${pct}% success (how close predictions are to expected)`;
@@ -400,7 +434,6 @@ async function showResults() {
         hint.textContent = '';
         hint.className = 'hint';
     }
-    $('resultsPanel').hidden = false;
 }
 
 /* ---------- fitness chart ---------- */
@@ -876,12 +909,17 @@ function newProblem() {
     $('cpInputs').value = 2;
     $('cpOutputs').value = 1;
     $('cpMemory').checked = false;
+    $('cpRandomize').checked = false;
+    $('cpWindow').value = 5;
+    $('cpPrime').value = 0;
+    syncCpRandom();
     $('cpDescription').value = '';
     $('cpTitle').innerHTML = 'New problem <span class="hint">give example inputs and the outputs you expect</span>';
     $('cpHint').textContent = 'Each row is one example. Values work best between 0 and 1. Defaults adapt to your data.';
     $('cpRunTemp').hidden = false; // New can run its rows once without saving
     $('cpError').textContent = '';
     cpShowEditor(true); // a fresh problem always edits rows (resets any episodic state)
+    $('advParams').open = true; // the memory/window controls live there now
     $('createPanel').hidden = false;
     cpAddRow(); cpAddRow();
 }
@@ -913,7 +951,9 @@ async function loadDataPanel(name) {
     $('cpName').value = d.custom ? d.name.replace(/^custom_/, '') : d.name;
     $('cpInputs').value = d.inputs;
     $('cpOutputs').value = d.outputs;
-    $('cpMemory').checked = d.memory;
+    // The memory / window controls live in advanced params and already reflect this
+    // problem (fillDefaults set them on selection); the Data view must NOT reset them,
+    // so a user's edits survive opening/closing it. Save reads them from there.
     $('cpDescription').value = d.description || '';
     $('cpTitle').innerHTML = `Edit '${esc(d.name)}' <span class="hint">saves a separate custom copy; the original is untouched</span>`;
     $('cpRunTemp').hidden = true; // the Data view edits/saves; it does not run
@@ -924,6 +964,7 @@ async function loadDataPanel(name) {
     $('cpHint').textContent = d.episodic
         ? 'This problem has no dataset - it runs a live simulation each evaluation, so there are no input/output rows to edit.'
         : 'Edit the values, then Save a custom copy.';
+    $('advParams').open = true; // the memory/window controls live there now
     $('createPanel').hidden = false;
     if (!d.episodic) cpRender();
 }
@@ -983,10 +1024,14 @@ function cpRender() {
 
 async function cpSave(runAfter) {
     const { inputs, outputs } = cpDims();
+    // Random scoring window: only for a memory problem with "randomize start" on.
+    const randomize = $('cpMemory').checked && $('cpRandomize').checked;
     const body = {
         name: $('cpName').value,
         inputs, outputs,
         memory: $('cpMemory').checked,
+        window: randomize ? Math.max(1, +$('cpWindow').value || 0) : 0,
+        'window-prime': randomize ? Math.max(0, +$('cpPrime').value || 0) : 0,
         description: $('cpDescription').value,
         rows: state.cpRows.map((r) => ({ input: r.input.map(Number), output: r.output.map(Number) })),
     };
@@ -1009,7 +1054,13 @@ async function cpSave(runAfter) {
 }
 
 function snapshotControls() {
-    const snap = { parallel: $('cfgParallel').checked, activation: $('cfgActivation').value, hiddenLayers: $('cfgHiddenLayers').value };
+    const snap = {
+        parallel: $('cfgParallel').checked, activation: $('cfgActivation').value, hiddenLayers: $('cfgHiddenLayers').value,
+        // Sequence/memory controls are advanced params too, so editing a problem's data
+        // and saving must leave them exactly as the user set them (not reset to stored).
+        cpMemory: $('cpMemory').checked, cpRandomize: $('cpRandomize').checked,
+        cpWindow: $('cpWindow').value, cpPrime: $('cpPrime').value,
+    };
     for (const id in NUM_FIELDS) snap[id] = $(id).value;
     for (const id in BIO_FIELDS) snap[id] = $(id).checked;
     return snap;
@@ -1019,9 +1070,14 @@ function restoreControls(c) {
     $('cfgParallel').checked = c.parallel;
     $('cfgActivation').value = c.activation;
     $('cfgHiddenLayers').value = c.hiddenLayers;
+    $('cpMemory').checked = c.cpMemory;
+    $('cpRandomize').checked = c.cpRandomize;
+    $('cpWindow').value = c.cpWindow;
+    $('cpPrime').value = c.cpPrime;
     for (const id in NUM_FIELDS) $(id).value = c[id];
     for (const id in BIO_FIELDS) $(id).checked = c[id];
     syncParallel();
+    syncCpRandom();
     syncTopology();
     syncBiology();
 }
@@ -1040,6 +1096,116 @@ async function deleteProblem() {
     if (!name || !(state.problems[name] && state.problems[name].custom)) return;
     try { await fetch('/api/problems/delete', { method: 'POST', body: JSON.stringify({ name }) }); } catch (_) { /* ignore */ }
     await loadProblems();
+}
+
+/* ---------- saved agents (auto-saved champions, integrated into the predictions panel) ---------- */
+// Refresh the dropdown from the server, keeping the current selection where possible,
+// then show whichever agent ends up selected.
+async function loadAgents(keep) {
+    let list = [];
+    try { list = await (await fetch('/api/agents')).json(); } catch (_) { return; }
+    if (!Array.isArray(list)) list = [];
+    state.agents = {};
+    const sel = $('agentSelect');
+    const previous = keep || sel.value;
+    sel.innerHTML = '';
+    for (const a of list) {
+        state.agents[a.slug] = a;
+        const opt = document.createElement('option');
+        opt.value = a.slug;
+        // Show the on-disk path in the dropdown itself.
+        opt.textContent = a.path || a.name;
+        sel.appendChild(opt);
+    }
+    $('agentEmpty').hidden = list.length > 0;
+    $('agentDeleteBtn').style.display = list.length ? '' : 'none';
+    $('agentSelect').parentElement.style.display = list.length ? '' : 'none';
+    if (list.length) {
+        sel.value = state.agents[previous] ? previous : list[0].slug;
+        await showAgent(sel.value);
+    } else {
+        $('agentRun').hidden = true;
+        $('agentMeta').textContent = '';
+        $('results').innerHTML = '';
+        $('successHint').textContent = '';
+    }
+}
+
+// Show one agent: its provenance (incl. genes count + saved path), its predictions
+// table (rebuilt server-side over the problem's data), and the "try it" inputs.
+async function showAgent(slug) {
+    const a = state.agents[slug];
+    if (!a) { $('agentRun').hidden = true; $('agentMeta').textContent = ''; return; }
+    const match = typeof a.matchRate === 'number' ? ` · match <b>${Math.round(a.matchRate * 100)}%</b>` : '';
+    const mem = a.memory ? ' · <span class="mem">memory</span>' : '';
+    $('agentMeta').innerHTML = `<b>${esc(a.problem || '')}</b> · ${a.inputs} in → ${a.outputs} out${mem}`
+        + ` · fitness <b>${Number(a.fitness).toFixed(4)}</b>${match}`
+        + ` · genes <b>${a.geneCount}</b> · hidden <b>${a.hidden}</b>`;
+
+    // Rebuild the expected-vs-predicted table for this agent (same view a finished run shows).
+    let table = null;
+    try { table = await (await fetch(`/api/agents/predictions?name=${encodeURIComponent(slug)}`)).json(); } catch (_) { /* ignore */ }
+    renderResultsTable(table && table.ok ? table : null);
+
+    buildAgentInputs(a);
+    $('agentRun').hidden = false;
+    $('agentReset').hidden = !a.memory;
+    $('agentStep').hidden = !a.memory;
+    $('agentOut').textContent = '';
+}
+
+function buildAgentInputs(a) {
+    state.agentSeq = [];
+    const wrap = $('agentInputs');
+    wrap.innerHTML = '';
+    for (let i = 0; i < a.inputs; i++) {
+        const inp = document.createElement('input');
+        inp.type = 'number'; inp.step = '0.1'; inp.min = '0'; inp.max = '1';
+        inp.value = i === 0 ? '1' : '0';
+        inp.title = `input ${i}`;
+        wrap.appendChild(inp);
+    }
+    if (a.memory) $('agentStep').textContent = 'step 0';
+}
+
+async function runAgentInference() {
+    const slug = $('agentSelect').value;
+    const a = state.agents[slug];
+    if (!a) return;
+    const vals = [...$('agentInputs').querySelectorAll('input')].map((i) => (i.value.trim() === '' ? '0' : i.value.trim()));
+    // A memory agent is fed one step at a time, accumulating; a plain one is independent.
+    if (a.memory) state.agentSeq.push(vals); else state.agentSeq = [vals];
+    const sequence = state.agentSeq.map((step) => step.join(',')).join(';');
+
+    let res;
+    try { res = await (await fetch(`/api/agents/infer?name=${encodeURIComponent(slug)}&input=${encodeURIComponent(sequence)}`)).json(); } catch (_) { return; }
+    if (!res || !res.ok) { $('agentOut').textContent = (res && res.error) || 'could not run'; return; }
+    const outs = res.outputs_values.map((o, i) => `<span class="chip">y${i} = <b>${Number(o).toFixed(4)}</b></span>`).join('');
+    $('agentOut').innerHTML = `output: ${outs}`;
+    if (a.memory) $('agentStep').textContent = `step ${state.agentSeq.length}`;
+}
+
+function resetAgentMemory() {
+    state.agentSeq = [];
+    $('agentStep').textContent = 'step 0';
+    $('agentOut').textContent = '';
+}
+
+// Auto-save the champion when a run ends (finished or stopped), under the run name,
+// then reload the library and select the freshly-saved agent.
+async function autoSaveAgent() {
+    if (!state.activeRun) return;
+    try {
+        const res = await (await fetch('/api/agents/save', { method: 'POST', body: JSON.stringify({ run: state.activeRun }) })).json();
+        if (res && res.ok) await loadAgents(res.name);
+    } catch (_) { /* ignore */ }
+}
+
+async function deleteAgentSelected() {
+    const slug = $('agentSelect').value;
+    if (!slug) return;
+    try { await fetch('/api/agents/delete', { method: 'POST', body: JSON.stringify({ name: slug }) }); } catch (_) { /* ignore */ }
+    await loadAgents();
 }
 
 /* ---------- islands ---------- */
@@ -1089,15 +1255,22 @@ async function init() {
     $('cpCancel').addEventListener('click', closeCreatePanel);
     $('cpInputs').addEventListener('change', cpRender);
     $('cpOutputs').addEventListener('change', cpRender);
+    $('cpMemory').addEventListener('change', syncCpRandom);
+    $('cpRandomize').addEventListener('change', syncCpRandom);
     $('inferBtn').addEventListener('click', runInference);
     $('inferReset').addEventListener('click', resetInferMemory);
     $('clearChartBtn').addEventListener('click', clearChart);
+    $('agentDeleteBtn').addEventListener('click', deleteAgentSelected);
+    $('agentSelect').addEventListener('change', () => showAgent($('agentSelect').value));
+    $('agentRunBtn').addEventListener('click', runAgentInference);
+    $('agentReset').addEventListener('click', resetAgentMemory);
 
     const svg = $('network');
     svg.addEventListener('mouseover', onEdgeOver);
     svg.addEventListener('mouseout', onEdgeOut);
     svg.addEventListener('mousemove', onEdgeMove);
 
+    loadAgents();
     statusLoop();
     healthLoop();
     poll();
