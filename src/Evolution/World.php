@@ -25,6 +25,7 @@ use Rotifer\Runtime\Fitness\FitnessEvaluator;
 use Rotifer\Runtime\Fitness\Predictor;
 use Rotifer\Runtime\Fitness\Problem;
 use Rotifer\Runtime\Fitness\SerialEvaluator;
+use Rotifer\Runtime\Fitness\WindowSelector;
 use Rotifer\Runtime\Rng;
 
 /**
@@ -44,6 +45,8 @@ final class World
     private readonly EventDispatcher $dispatcher;
     private readonly MigrationPolicy $migration;
     private readonly IdSequence $ids;
+    private readonly ?WindowSelector $windowSelector;
+    private readonly int $scorableRows;
 
     /** @var list<Island> */
     private array $islands = [];
@@ -78,6 +81,8 @@ final class World
         $this->dispatcher = $dispatcher ?? new EventDispatcher();
         $this->migration = new MigrationPolicy($this->config->getMigrationEveryGenerations(), $this->config->getMigrationTopK());
         $this->ids = new IdSequence();
+        $this->windowSelector = WindowSelector::fromConfig($this->config);
+        $this->scorableRows = $this->windowSelector === null ? 0 : WindowSelector::countScorable($problem->data());
 
         $this->buildIslands($master);
     }
@@ -135,7 +140,8 @@ final class World
         // all islands into a single call lets the parallel evaluator shard the whole
         // population across its workers at once (one IPC round, larger chunks, busier
         // cores) instead of one undersized round per island.
-        $this->evaluator->evaluate($this->population(), $this->problem);
+        $window = $this->windowSelector?->forGeneration($gen, $this->scorableRows);
+        $this->evaluator->evaluate($this->population(), $this->problem, $window);
 
         $emigrants = $this->migration->isDue($gen) ? $this->collectEmigrants() : null;
 

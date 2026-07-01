@@ -10,6 +10,7 @@ use Rotifer\Genome\Weight;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\Fitness\Problem;
 use Rotifer\Runtime\Fitness\Scorer;
+use Rotifer\Runtime\Fitness\ScoringWindow;
 use Rotifer\Runtime\Rng;
 
 /**
@@ -32,19 +33,19 @@ final class LifetimeLearner
     ) {
     }
 
-    public function refine(Organism $organism, Problem $problem): void
+    public function refine(Organism $organism, Problem $problem, ?ScoringWindow $window = null): void
     {
         $spec = $organism->spec();
         $base = $organism->genome();
 
         $bestGenome = $base;
-        $bestFitness = Scorer::score($organism, $problem);
+        $bestFitness = Scorer::score($organism, $problem, $window);
 
         $genes = $base->genes();
         if ($genes !== []) {
             for ($i = 0; $i < $this->steps; $i++) {
                 $candidate = $this->perturb($bestGenome, $this->rng);
-                $fitness = Scorer::scoreGenome($candidate, $spec, $problem);
+                $fitness = Scorer::scoreGenome($candidate, $spec, $problem, $window);
                 if ($fitness > $bestFitness) {
                     $bestFitness = $fitness;
                     $bestGenome = $candidate;
