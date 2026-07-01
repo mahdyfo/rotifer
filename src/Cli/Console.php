@@ -285,6 +285,9 @@ final class Console
               --hidden-layers=L  Fixed layered MLP, e.g. 5,3,5 (empty = dynamic)     [dynamic]
               --simplicity=N     Sig-figs of fitness tied so simpler nets win (0=off) [3]
               --activation=NAME  sigmoid|relu|leaky_relu|tanh|threshold|gelu|softmax [sigmoid]
+              --window=N         Score each gen on a random N-row window of the data
+                                 (memory anti-overfit; 0 = whole sequence)           [0]
+              --window-prime=N   Rows fed unscored just before the window to prime memory [0]
 
             Reproduction:
               --crossover=F          Chance offspring mix two parents               [0.5]

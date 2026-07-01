@@ -42,6 +42,27 @@ final class RunOptionsTest extends TestCase
         $this->assertSame(2, $c->getSimplicity());
     }
 
+    public function testMemoryOverrideTogglesRecurrentState(): void
+    {
+        $on = RunOptions::applyTo(EvolutionConfig::default(), ['memory' => '1']);
+        $this->assertTrue($on->hasMemory());
+
+        $off = RunOptions::applyTo($on, ['memory' => '0']);
+        $this->assertFalse($off->hasMemory());
+    }
+
+    public function testRandomWindowIsSettableAndDisablable(): void
+    {
+        $on = RunOptions::applyTo(EvolutionConfig::default(), ['window' => '5', 'window-prime' => '2']);
+        $this->assertTrue($on->isRandomWindowEnabled());
+        $this->assertSame(5, $on->getWindowSize());
+        $this->assertSame(2, $on->getWindowPrime());
+
+        // Explicit 0 turns the window off again.
+        $off = RunOptions::applyTo($on, ['window' => '0']);
+        $this->assertFalse($off->isRandomWindowEnabled());
+    }
+
     public function testWeightMutationMechanicsAreSettable(): void
     {
         // The knob the user called out: weightMutation(count, adjustmentRange, randomizeProbability).

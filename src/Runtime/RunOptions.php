@@ -36,6 +36,13 @@ final class RunOptions
         'hidden-layers' => 'string',
         'simplicity' => 'int',
         'activation' => 'string',
+        // Recurrent state: on = neurons remember their previous value across steps
+        // (needed for sequence/memory problems), off = pure feed-forward.
+        'memory' => 'bool',
+        // Random scoring window (memory anti-overfit): window size, and how many rows
+        // to feed unscored just before it to prime memory. Size 0 = off.
+        'window' => 'int',
+        'window-prime' => 'int',
         // Reproduction
         'crossover' => 'float',
         'weight-mutation' => 'float',
@@ -116,6 +123,16 @@ final class RunOptions
         }
         if (isset($options['activation'])) {
             $config = $config->activation(ActivationFactory::fromName((string) $options['activation']));
+        }
+        if (array_key_exists('memory', $options)) {
+            $config = $config->memory(self::bool($options['memory']));
+        }
+        // Random scoring window: setting `window` (size) turns it on; 0 turns it off.
+        // `window-prime` alone tweaks the priming rows while keeping the configured size.
+        if (self::touches($options, ['window', 'window-prime'])) {
+            $size = $int('window') ?? $config->getWindowSize();
+            $prime = $int('window-prime') ?? $config->getWindowPrime();
+            $config = $config->randomWindow($size, $prime, enabled: $size > 0);
         }
         if (isset($options['crossover'])) {
             $config = $config->crossover((float) $options['crossover']);
@@ -202,6 +219,9 @@ final class RunOptions
             'hidden-layers' => implode(',', $c->getHiddenLayers()),
             'simplicity' => $c->getSimplicity(),
             'activation' => $c->getActivation()->name(),
+            'memory' => $c->hasMemory(),
+            'window' => $c->getWindowSize(),
+            'window-prime' => $c->getWindowPrime(),
             'crossover' => $c->getCrossoverProbability(),
             'weight-mutation' => $c->getWeightMutationProbability(),
             'add-neuron' => $c->getAddNeuronProbability(),
