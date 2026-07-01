@@ -76,6 +76,12 @@ final class CustomProblem implements Problem, Describable
             $config = $config->lifetimeLearning(steps: 5, lamarckian: 0.3);
         }
 
+        // A random scoring window only makes sense for a sequence (memory) task.
+        $window = (int) ($def['window'] ?? 0);
+        if ($this->hasMemory() && $window > 0) {
+            $config = $config->randomWindow($window, (int) ($def['window-prime'] ?? 0));
+        }
+
         return $config;
     }
 

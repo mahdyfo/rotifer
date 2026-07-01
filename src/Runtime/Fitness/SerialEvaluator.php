@@ -22,13 +22,13 @@ final class SerialEvaluator implements FitnessEvaluator
     {
     }
 
-    public function evaluate(array $organisms, Problem $problem): void
+    public function evaluate(array $organisms, Problem $problem, ?ScoringWindow $window = null): void
     {
         foreach ($organisms as $organism) {
             if ($this->learner !== null) {
-                $this->learner->refine($organism, $problem);
+                $this->learner->refine($organism, $problem, $window);
             } else {
-                $organism->setFitness(Scorer::score($organism, $problem));
+                $organism->setFitness(Scorer::score($organism, $problem, $window));
             }
         }
     }

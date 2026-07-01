@@ -13,6 +13,9 @@ use Rotifer\Organism\Organism;
  */
 interface FitnessEvaluator
 {
-    /** @param list<Organism> $organisms */
-    public function evaluate(array $organisms, Problem $problem): void;
+    /**
+     * @param list<Organism> $organisms
+     * @param ?ScoringWindow $window this generation's scoring window, or null to score every row
+     */
+    public function evaluate(array $organisms, Problem $problem, ?ScoringWindow $window = null): void;
 }

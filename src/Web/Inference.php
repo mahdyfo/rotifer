@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rotifer\Web;
 
+use Rotifer\Genome\Genome;
 use Rotifer\Network\Activation\ActivationFactory;
 use Rotifer\Network\Brain;
 use Rotifer\Network\NetworkSpec;
@@ -31,6 +32,24 @@ final class Inference
         array $steps,
     ): array {
         $genome = (new JsonCodec())->decode(json_encode($genes, JSON_THROW_ON_ERROR));
+        return self::evaluateGenome($genome, $inputs, $outputs, $activation, $memory, $steps);
+    }
+
+    /**
+     * As {@see evaluate()} but from an already-decoded genome (a saved agent stores
+     * its genome as a compact hex string, so it arrives as a {@see Genome}).
+     *
+     * @param list<list<float>> $steps
+     * @return array{outputs: list<float>, nodes: array<string, float>}
+     */
+    public static function evaluateGenome(
+        Genome $genome,
+        int $inputs,
+        int $outputs,
+        string $activation,
+        bool $memory,
+        array $steps,
+    ): array {
         $spec = new NetworkSpec(
             new Shape($inputs, $outputs),
             $memory,
