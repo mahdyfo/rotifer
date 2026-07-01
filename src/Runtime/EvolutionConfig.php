@@ -29,6 +29,12 @@ final class EvolutionConfig
     private int $elitism = 1;
     private float $diversityInjection = 0.0;
     private bool $hasMemory = false;
+    // Score each generation on a randomly-placed window of the data instead of the
+    // whole sequence, so a memory network can't overfit to absolute step numbers.
+    // Off unless a size is set; only meaningful with memory. See WindowSelector.
+    private bool $randomWindowEnabled = false;
+    private int $windowSize = 0;
+    private int $windowPrime = 0;
     private int $initialHidden = 1;
     /** @var list<int> fixed hidden-layer sizes; empty = dynamic, evolving topology */
     private array $hiddenLayers = [];
@@ -146,6 +152,22 @@ final class EvolutionConfig
     {
         $c = clone $this;
         $c->hasMemory = $hasMemory;
+        return $c;
+    }
+
+    /**
+     * Score each generation on a random $size-row window of the data rather than
+     * the whole sequence (anti-overfitting for memory tasks - a step counter can't
+     * lock onto a moving window). $prime rows immediately before the window are fed
+     * unscored to build memory context first, and the window never starts before
+     * row $prime. $size <= 0 (the default) leaves it off.
+     */
+    public function randomWindow(int $size, int $prime = 0, bool $enabled = true): self
+    {
+        $c = clone $this;
+        $c->windowSize = max(0, $size);
+        $c->windowPrime = max(0, $prime);
+        $c->randomWindowEnabled = $enabled && $c->windowSize > 0;
         return $c;
     }
 
@@ -337,6 +359,21 @@ final class EvolutionConfig
     public function getInitialHidden(): int
     {
         return $this->initialHidden;
+    }
+
+    public function isRandomWindowEnabled(): bool
+    {
+        return $this->randomWindowEnabled && $this->windowSize > 0;
+    }
+
+    public function getWindowSize(): int
+    {
+        return $this->windowSize;
+    }
+
+    public function getWindowPrime(): int
+    {
+        return $this->windowPrime;
     }
 
     /** @return list<int> fixed hidden-layer sizes; empty means dynamic topology */
