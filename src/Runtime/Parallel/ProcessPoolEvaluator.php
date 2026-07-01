@@ -8,6 +8,7 @@ use Amp\Parallel\Worker\ContextWorkerPool;
 use Amp\Parallel\Worker\WorkerPool;
 use Rotifer\Runtime\Fitness\ClosableEvaluator;
 use Rotifer\Runtime\Fitness\Problem;
+use Rotifer\Runtime\Fitness\ScoringWindow;
 use Rotifer\Runtime\Fitness\SerialEvaluator;
 
 use function Amp\Future\await;
@@ -51,7 +52,7 @@ final class ProcessPoolEvaluator implements ClosableEvaluator
         $this->pool->shutdown();
     }
 
-    public function evaluate(array $organisms, Problem $problem): void
+    public function evaluate(array $organisms, Problem $problem, ?ScoringWindow $window = null): void
     {
         $count = count($organisms);
         if ($count === 0) {
@@ -59,7 +60,7 @@ final class ProcessPoolEvaluator implements ClosableEvaluator
         }
         // Not worth the IPC for a handful of organisms.
         if ($count < $this->workers * 2) {
-            $this->fallback->evaluate($organisms, $problem);
+            $this->fallback->evaluate($organisms, $problem, $window);
             return;
         }
 
@@ -67,7 +68,7 @@ final class ProcessPoolEvaluator implements ClosableEvaluator
         // needs constructor arguments (e.g. a user-authored CustomProblem) can't be
         // reconstructed there, so score it serially instead of crashing the worker.
         if (!self::isZeroArgConstructible($problem)) {
-            $this->fallback->evaluate($organisms, $problem);
+            $this->fallback->evaluate($organisms, $problem, $window);
             return;
         }
 
@@ -81,7 +82,7 @@ final class ProcessPoolEvaluator implements ClosableEvaluator
         $executions = [];
         foreach ($chunks as $i => $chunk) {
             $genomes = array_map(static fn ($o) => $o->genome()->toArray(), $chunk);
-            $executions[$i] = $this->pool->submit(new EvaluationTask($problem::class, $spec, $genomes));
+            $executions[$i] = $this->pool->submit(new EvaluationTask($problem::class, $spec, $genomes, $window));
         }
 
         $results = await(array_map(static fn ($e) => $e->getFuture(), $executions));

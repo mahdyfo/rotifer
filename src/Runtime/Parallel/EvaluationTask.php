@@ -11,6 +11,7 @@ use Rotifer\Genome\Genome;
 use Rotifer\Network\NetworkSpec;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\Fitness\Scorer;
+use Rotifer\Runtime\Fitness\ScoringWindow;
 
 /**
  * A self-contained unit of fitness evaluation that runs inside an amphp worker.
@@ -32,6 +33,7 @@ final class EvaluationTask implements Task
         private readonly string $problemClass,
         private readonly NetworkSpec $spec,
         private readonly array $genomes,
+        private readonly ?ScoringWindow $window = null,
     ) {
     }
 
@@ -44,7 +46,7 @@ final class EvaluationTask implements Task
         $fitness = [];
         foreach ($this->genomes as $genomeArray) {
             $organism = new Organism(Genome::fromArray($genomeArray), $this->spec);
-            $fitness[] = Scorer::score($organism, $problem);
+            $fitness[] = Scorer::score($organism, $problem, $this->window);
         }
         return $fitness;
     }

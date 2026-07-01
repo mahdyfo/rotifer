@@ -18,6 +18,7 @@ use Rotifer\Network\NetworkSpec;
 use Rotifer\Organism\Organism;
 use Rotifer\Runtime\EvolutionConfig;
 use Rotifer\Runtime\Fitness\Scorer;
+use Rotifer\Runtime\Fitness\WindowSelector;
 use Rotifer\Runtime\Rng;
 
 /**
@@ -94,11 +95,17 @@ final class IslandEpochTask implements Task
             $island->restoreState($this->state);
         }
 
+        // The window is a pure function of (seed, generation), so the worker computes
+        // the same slice for a given generation as the serial engine would.
+        $windowSelector = WindowSelector::fromConfig($config);
+        $scorableRows = $windowSelector === null ? 0 : WindowSelector::countScorable($problem->data());
+
         $migrants = [];
         $last = $this->startGeneration + $this->generations;
         for ($g = $this->startGeneration + 1; $g <= $last; $g++) {
+            $window = $windowSelector?->forGeneration($g, $scorableRows);
             foreach ($island->population() as $organism) {
-                $organism->setFitness(Scorer::score($organism, $problem));
+                $organism->setFitness(Scorer::score($organism, $problem, $window));
             }
             if ($g === $last) {
                 $migrants = $this->topGenomes($island->population(), $this->migrants);
